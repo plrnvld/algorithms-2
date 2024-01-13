@@ -58,6 +58,8 @@ public class WordNet {
             throw new IllegalArgumentException();
 
         return -1;
+
+        // SAP.length
     }
 
     // a synset (second field of synsets.txt) that is the common ancestor of nounA
@@ -68,6 +70,8 @@ public class WordNet {
             throw new IllegalArgumentException();
 
         return null;
+
+        // Sap.ancestor.join nouns
     }
 
     // do unit testing of this class
