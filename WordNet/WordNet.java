@@ -1,18 +1,37 @@
 import java.lang.*;
 import java.util.*;
+import java.util.stream.StreamSupport;
+
+import edu.princeton.cs.algs4.In;
 
 public class WordNet {
+
+    private String[][] nounsSets;
 
     // constructor takes the name of the two input files
     public WordNet(String synsets, String hypernyms) {
         if (synsets == null || hypernyms == null)
             throw new IllegalArgumentException();
 
+        String[] synsetLines = new In(synsets).readAllLines();
+        nounsSets = new String[synsetLines.length][];
+
+        for (int i = 0; i < synsetLines.length; i++) {
+            nounsSets[i] = synsetLines[i].split(",")[1].split(" ");
+        }
     }
 
     // returns all WordNet nouns
     public Iterable<String> nouns() {
-        return null;
+        List<String> list = new ArrayList<String>();
+
+        for (String[] nounsSet : nounsSets) {
+            for (String noun : nounsSet) {
+                list.add(noun);
+            }
+        }
+
+        return list;
     }
 
     // is the word a WordNet noun?
@@ -20,7 +39,8 @@ public class WordNet {
         if (word == null)
             throw new IllegalArgumentException();
 
-        return false;
+        return StreamSupport.stream(nouns().spliterator(), false)
+                .anyMatch(n -> n.equals(word));
     }
 
     // distance between nounA and nounB (defined below)
