@@ -7,6 +7,7 @@ import edu.princeton.cs.algs4.In;
 public class WordNet {
 
     private String[][] nounsSets;
+    private String[][] hypSets;
 
     // constructor takes the name of the two input files
     public WordNet(String synsets, String hypernyms) {
@@ -18,6 +19,14 @@ public class WordNet {
 
         for (int i = 0; i < synsetLines.length; i++) {
             nounsSets[i] = synsetLines[i].split(",")[1].split(" ");
+        }
+
+        String[] hypLines = new In(hypernyms).readAllLines();
+        hypSets = new String[hypLines.length][];
+
+        for (int i = 0; i < hypLines.length; i++) {
+            String[] splits = hypLines[i].split(",");
+            hypSets[i] = Arrays.copyOfRange(splits, 1, splits.length);   
         }
     }
 
