@@ -10,7 +10,6 @@ import edu.princeton.cs.algs4.ST;
 
 public class WordNet {
 
-    private final String[][] nounsSets;
     private final ST<String, List<Integer>> nounTable;
     private final Digraph digraph;
 
@@ -20,15 +19,12 @@ public class WordNet {
             throw new IllegalArgumentException();
 
         String[] synsetLines = new In(synsets).readAllLines();
-        nounsSets = new String[synsetLines.length][];
         nounTable = new ST<>();
 
         digraph = new Digraph(synsetLines.length);
 
         for (int i = 0; i < synsetLines.length; i++) {
             String[] nouns = synsetLines[i].split(",")[1].split(" ");
-            nounsSets[i] = nouns;
-
             for (String noun : nouns) {
                 if (nounTable.contains(noun))
                     nounTable.get(noun).add(i);
@@ -51,9 +47,9 @@ public class WordNet {
             }
         }
 
-        Integer rootIndex = -1;
-        Integer rootCount = 0;
-        for (Integer i = 0; i < digraph.V(); i++) {
+        int rootIndex = -1;
+        int rootCount = 0;
+        for (int i = 0; i < digraph.V(); i++) {
             if (digraph.outdegree(i) == 0) {
                 rootCount++;
                 rootIndex = i;
@@ -63,10 +59,8 @@ public class WordNet {
         if (rootCount != 1)
             throw new IllegalArgumentException("not allowed: digraph contains " + rootCount + " roots");
 
-        System.out.println("Detected " + rootCount + " root(s)");
-
         DirectedDFS didfs = new DirectedDFS(digraph.reverse(), rootIndex);
-        for (Integer i = 0; i < digraph.V(); i++) {
+        for (int i = 0; i < digraph.V(); i++) {
             if (!didfs.marked(i))
                 throw new IllegalArgumentException("not allowed: not all vertices are connected");
         }
@@ -74,7 +68,6 @@ public class WordNet {
         DirectedCycle dicycle = new DirectedCycle(digraph);
         if (dicycle.hasCycle())
             throw new IllegalArgumentException("not allowed: digraph contains cycle");
-
     }
 
     // returns all WordNet nouns
@@ -95,9 +88,8 @@ public class WordNet {
         if (nounA == null || nounB == null || !isNoun(nounA) || !isNoun(nounB))
             throw new IllegalArgumentException();
 
-        return -1;
-
-        // SAP.length
+        SAP sap = new SAP(digraph);
+        return sap.length(nounTable.get(nounA), nounTable.get(nounB));
     }
 
     // a synset (second field of synsets.txt) that is the common ancestor of nounA
@@ -131,6 +123,5 @@ public class WordNet {
 
             System.out.println(wordNet.digraph.toString());
         }
-
     }
 }
