@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.DirectedCycle;
+import edu.princeton.cs.algs4.DirectedDFS;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.ST;
 
@@ -50,20 +51,30 @@ public class WordNet {
             }
         }
 
+        Integer rootIndex = -1;
         Integer rootCount = 0;
         for (Integer i = 0; i < digraph.V(); i++) {
-            if (digraph.indegree(i) == 0)
+            if (digraph.outdegree(i) == 0) {
                 rootCount++;
+                rootIndex = i;
+            }
+        }
+
+        if (rootCount != 1)
+            throw new IllegalArgumentException("not allowed: digraph contains " + rootCount + " roots");
+
+        System.out.println("Detected " + rootCount + " root(s)");
+
+        DirectedDFS didfs = new DirectedDFS(digraph.reverse(), rootIndex);
+        for (Integer i = 0; i < digraph.V(); i++) {
+            if (!didfs.marked(i))
+                throw new IllegalArgumentException("not allowed: not all vertices are connected");
         }
 
         DirectedCycle dicycle = new DirectedCycle(digraph);
         if (dicycle.hasCycle())
             throw new IllegalArgumentException("not allowed: digraph contains cycle");
 
-        if (rootCount != 1)
-            throw new IllegalArgumentException("not allowed: digraph contains " + rootCount + " roots");
-
-        System.out.println("Detected " + rootCount + " root(s)");
     }
 
     // returns all WordNet nouns
