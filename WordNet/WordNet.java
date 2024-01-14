@@ -2,11 +2,14 @@ import java.lang.*;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
+import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.ST;
 
 public class WordNet {
 
     private String[][] nounsSets;
+    private ST<String, List<Integer>> nounTable;
     private String[][] hypSets;
 
     // constructor takes the name of the two input files
@@ -14,11 +17,28 @@ public class WordNet {
         if (synsets == null || hypernyms == null)
             throw new IllegalArgumentException();
 
+        
         String[] synsetLines = new In(synsets).readAllLines();
         nounsSets = new String[synsetLines.length][];
+        nounTable = new ST<>();
+
+
+        Digraph digraph = new Digraph(synsetLines.length);
+        // ####### Continue here
 
         for (int i = 0; i < synsetLines.length; i++) {
-            nounsSets[i] = synsetLines[i].split(",")[1].split(" ");
+            String[] nouns = synsetLines[i].split(",")[1].split(" ");
+            nounsSets[i] = nouns;
+
+            for (String noun : nouns) {
+                if (nounTable.contains(noun))
+                    nounTable.get(noun).add(i);
+                else {
+                    List<Integer> ids = new ArrayList<Integer>();
+                    ids.add(i);
+                    nounTable.put(noun, ids);
+                }
+            }
         }
 
         String[] hypLines = new In(hypernyms).readAllLines();
