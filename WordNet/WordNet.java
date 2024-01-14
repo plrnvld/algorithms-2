@@ -50,9 +50,20 @@ public class WordNet {
             }
         }
 
+        Integer rootCount = 0;
+        for (Integer i = 0; i < digraph.V(); i++) {
+            if (digraph.indegree(i) == 0)
+                rootCount++;
+        }
+
         DirectedCycle dicycle = new DirectedCycle(digraph);
         if (dicycle.hasCycle())
             throw new IllegalArgumentException("not allowed: digraph contains cycle");
+
+        if (rootCount != 1)
+            throw new IllegalArgumentException("not allowed: digraph contains " + rootCount + " roots");
+
+        System.out.println("Detected " + rootCount + " root(s)");
     }
 
     // returns all WordNet nouns
@@ -70,7 +81,7 @@ public class WordNet {
 
     // distance between nounA and nounB (defined below)
     public int distance(String nounA, String nounB) {
-        if (nounA == null || nounB == null)
+        if (nounA == null || nounB == null || !isNoun(nounA) || !isNoun(nounB))
             throw new IllegalArgumentException();
 
         return -1;
@@ -82,7 +93,7 @@ public class WordNet {
     // and nounB
     // in a shortest ancestral path (defined below)
     public String sap(String nounA, String nounB) {
-        if (nounA == null || nounB == null)
+        if (nounA == null || nounB == null || !isNoun(nounA) || !isNoun(nounB))
             throw new IllegalArgumentException();
 
         return null;
@@ -101,8 +112,7 @@ public class WordNet {
             WordNet wordNet = new WordNet(args[0], args[1]);
 
             System.out.println(wordNet.digraph.toString());
-        }
-        else if (args.length == 0) {
+        } else if (args.length == 0) {
             final String synsetsFile = "./testfiles/synsets.txt";
             final String hypernymsFile = "./testfiles/hypernyms.txt";
             System.out.println("Using default files: " + synsetsFile + ", " + hypernymsFile);
