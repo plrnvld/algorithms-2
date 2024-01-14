@@ -1,7 +1,4 @@
-import java.lang.*;
 import java.util.*;
-import java.util.stream.StreamSupport;
-
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.ST;
@@ -10,21 +7,19 @@ public class WordNet {
 
     private String[][] nounsSets;
     private ST<String, List<Integer>> nounTable;
-    private String[][] hypSets;
+
+    public Digraph digraph;
 
     // constructor takes the name of the two input files
     public WordNet(String synsets, String hypernyms) {
         if (synsets == null || hypernyms == null)
             throw new IllegalArgumentException();
 
-        
         String[] synsetLines = new In(synsets).readAllLines();
         nounsSets = new String[synsetLines.length][];
         nounTable = new ST<>();
 
-
-        Digraph digraph = new Digraph(synsetLines.length);
-        // ####### Continue here
+        digraph = new Digraph(synsetLines.length);
 
         for (int i = 0; i < synsetLines.length; i++) {
             String[] nouns = synsetLines[i].split(",")[1].split(" ");
@@ -42,11 +37,14 @@ public class WordNet {
         }
 
         String[] hypLines = new In(hypernyms).readAllLines();
-        hypSets = new String[hypLines.length][];
 
         for (int i = 0; i < hypLines.length; i++) {
             String[] splits = hypLines[i].split(",");
-            hypSets[i] = Arrays.copyOfRange(splits, 1, splits.length);   
+            String[] destinations = Arrays.copyOfRange(splits, 1, splits.length);
+
+            for (String dest : destinations) {
+                digraph.addEdge(i, Integer.parseInt(dest));
+            }
         }
     }
 
@@ -68,8 +66,7 @@ public class WordNet {
         if (word == null)
             throw new IllegalArgumentException();
 
-        return StreamSupport.stream(nouns().spliterator(), false)
-                .anyMatch(n -> n.equals(word));
+        return nounTable.contains(word);
     }
 
     // distance between nounA and nounB (defined below)
@@ -97,5 +94,13 @@ public class WordNet {
     // do unit testing of this class
     public static void main(String[] args) {
         System.out.println("Let's work");
+
+        System.out.println(args.length);
+
+        if (args.length == 2) {
+            WordNet wordNet = new WordNet(args[0], args[1]);
+
+            System.out.println(wordNet.digraph.toString());
+        }
     }
 }
