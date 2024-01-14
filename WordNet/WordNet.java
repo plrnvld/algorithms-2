@@ -1,4 +1,7 @@
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.DirectedCycle;
 import edu.princeton.cs.algs4.In;
@@ -6,10 +9,9 @@ import edu.princeton.cs.algs4.ST;
 
 public class WordNet {
 
-    private String[][] nounsSets;
-    private ST<String, List<Integer>> nounTable;
-
-    public Digraph digraph;
+    private final String[][] nounsSets;
+    private final ST<String, List<Integer>> nounTable;
+    private final Digraph digraph;
 
     // constructor takes the name of the two input files
     public WordNet(String synsets, String hypernyms) {
