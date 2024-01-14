@@ -1,5 +1,6 @@
 import java.util.*;
 import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.DirectedCycle;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.ST;
 
@@ -46,6 +47,10 @@ public class WordNet {
                 digraph.addEdge(i, Integer.parseInt(dest));
             }
         }
+
+        DirectedCycle dicycle = new DirectedCycle(digraph);
+        if (dicycle.hasCycle())
+            throw new IllegalArgumentException("not allowed: digraph contains cycle");
     }
 
     // returns all WordNet nouns
