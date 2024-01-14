@@ -33,32 +33,43 @@ public class SAP {
         
         for (int adj : digraph.adj(v)) {
             // from[adj] = v;
+            System.out.println("> Enqueue " + adj + " (len = " + len + ", up)" );
             queue.enqueue(new NextVertex(adj, true));
+        }
+
+        for (int adj : reversed.adj(v)) {
+            // from[adj] = v;
+            System.out.println("> Enqueue " + adj + " (len = " + len + ", down)" );
+            queue.enqueue(new NextVertex(adj, false));
         }
 
         while (!queue.isEmpty()) {
             NextVertex next = queue.dequeue();
             marked[next.id] = true;
+            System.out.println(">>> Dequeue " + next.id);
             if (next.id == w) {
                 return len;
             }
 
             if (next.up) {
                 for (int upAdj : digraph.adj(next.id)) {
-                    if (!marked[next.id]) {
+                    if (!marked[upAdj]) {
                         // from[upAdj] = next.id;
+                        System.out.println("> Enqueue " + upAdj + " (len = " + len + ", up)" );
                         queue.enqueue(new NextVertex(upAdj, true));
                     }
                 }
             }
 
             for (int downAdj : reversed.adj(next.id)) {
-                if (!marked[next.id]) {
+                if (!marked[downAdj]) {
                     // from[downAdj] = next.id;
+                    System.out.println("> Enqueue " + downAdj + " (len = " + len + ", up)" );
                     queue.enqueue(new NextVertex(downAdj, false));
                 }
             }
 
+            
             len += 1;
         }
 
@@ -82,6 +93,11 @@ public class SAP {
         for (int adj : digraph.adj(v)) {
             from[adj] = v;
             queue.enqueue(new NextVertex(adj, true));
+        }
+
+        for (int adj : reversed.adj(v)) {
+            from[adj] = v;
+            queue.enqueue(new NextVertex(adj, false));
         }
 
         while (!queue.isEmpty()) {
