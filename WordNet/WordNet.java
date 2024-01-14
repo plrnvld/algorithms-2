@@ -50,15 +50,7 @@ public class WordNet {
 
     // returns all WordNet nouns
     public Iterable<String> nouns() {
-        List<String> list = new ArrayList<String>();
-
-        for (String[] nounsSet : nounsSets) {
-            for (String noun : nounsSet) {
-                list.add(noun);
-            }
-        }
-
-        return list;
+        return nounTable.keys();
     }
 
     // is the word a WordNet noun?
@@ -98,9 +90,19 @@ public class WordNet {
         System.out.println(args.length);
 
         if (args.length == 2) {
+            System.out.println("Using arguments: " + args[0] + ", " + args[1]);
             WordNet wordNet = new WordNet(args[0], args[1]);
 
             System.out.println(wordNet.digraph.toString());
         }
+        else if (args.length == 0) {
+            final String synsetsFile = "./testfiles/synsets.txt";
+            final String hypernymsFile = "./testfiles/hypernyms.txt";
+            System.out.println("Using default files: " + synsetsFile + ", " + hypernymsFile);
+            WordNet wordNet = new WordNet(synsetsFile, hypernymsFile);
+
+            System.out.println(wordNet.digraph.toString());
+        }
+
     }
 }
