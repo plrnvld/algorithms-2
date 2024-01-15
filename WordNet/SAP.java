@@ -32,19 +32,12 @@ public class SAP {
         markedUp[v] = true;
         markedDown[v] = true;
 
-        for (int adj : digraph.adj(v)) {
-            from[adj] = v;
-            queue.enqueue(new NextVertex(adj, true));
-        }
-
-        for (int adj : reversed.adj(v)) {
-            from[adj] = v;
-            queue.enqueue(new NextVertex(adj, false));
-        }
+        digraph.adj(v).forEach(adj -> addNext(adj, v, true, from, queue));
+        reversed.adj(v).forEach(adj -> addNext(adj, v, false, from, queue));
 
         while (!queue.isEmpty()) {
             NextVertex curr = queue.dequeue();
-            
+
             if (curr.up) {
                 markedUp[curr.id] = true;
                 markedDown[curr.id] = true;
@@ -62,74 +55,66 @@ public class SAP {
                 return pathLen;
             }
 
-            if (curr.up) {
-                for (int upAdj : digraph.adj(curr.id)) {
-                    if (!markedUp[upAdj]) {
-                        from[upAdj] = curr.id;
-                        queue.enqueue(new NextVertex(upAdj, true));
-                    }
-                }
-            }
+            digraph.adj(curr.id).forEach(adj -> {
+                if (!markedUp[adj])
+                    addNext(adj, curr.id, curr.up, from, queue);
+            });
 
-            for (int downAdj : reversed.adj(curr.id)) {
-                if (!markedDown[downAdj]) {
-                    from[downAdj] = curr.id;
-                    queue.enqueue(new NextVertex(downAdj, curr.up));
-                }
-            }
+            reversed.adj(curr.id).forEach(adj -> {
+                if (!markedDown[adj])
+                    addNext(adj, curr.id, curr.up, from, queue);
+            });
         }
 
         return -1;
     }
 
+    private void addNext(int nextId, int currId, boolean currUp, int[] from, Queue<NextVertex> queue) {
+        from[nextId] = currId;
+        queue.enqueue(new NextVertex(nextId, currUp));
+    }
+
     // a common ancestor of v and w that participates in a shortest ancestral path;
     // -1 if no such path
     public int ancestor(int v, int w) {
-        boolean[] marked = new boolean[digraph.V()];
+        boolean[] markedUp = new boolean[digraph.V()];
+        boolean[] markedDown = new boolean[digraph.V()];
         int[] from = new int[digraph.V()];
         if (digraph.V() == 0)
             return -1;
 
         if (v == w)
-            return v;
+            return 0;
 
         Queue<NextVertex> queue = new Queue<>();
-        marked[v] = true;
+        markedUp[v] = true;
+        markedDown[v] = true;
 
-        for (int adj : digraph.adj(v)) {
-            from[adj] = v;
-            queue.enqueue(new NextVertex(adj, true));
-        }
-
-        for (int adj : reversed.adj(v)) {
-            from[adj] = v;
-            queue.enqueue(new NextVertex(adj, false));
-        }
+        digraph.adj(v).forEach(adj -> addNext(adj, v, true, from, queue));
+        reversed.adj(v).forEach(adj -> addNext(adj, v, false, from, queue));
 
         while (!queue.isEmpty()) {
-            NextVertex next = queue.dequeue();
-            marked[next.id] = true;
-            if (next.id == w) {
+            NextVertex curr = queue.dequeue();
+
+            if (curr.up) {
+                markedUp[curr.id] = true;
+                markedDown[curr.id] = true;
+            } else
+                markedDown[curr.id] = true;
+
+            if (curr.id == w) {
                 return detectAncestor(w, from);
             }
 
-            if (next.up) {
-                for (int upAdj : digraph.adj(next.id)) {
-                    // System.out.println(" Adjacent up: " + upAdj);
-                    if (!marked[next.id]) {
-                        from[upAdj] = next.id;
-                        queue.enqueue(new NextVertex(upAdj, true));
-                    }
-                }
-            }
+            digraph.adj(curr.id).forEach(adj -> {
+                if (!markedUp[adj])
+                    addNext(adj, curr.id, curr.up, from, queue);
+            });
 
-            for (int downAdj : reversed.adj(next.id)) {
-                // System.out.println(" Adjacent down: " + downAdj);
-                if (!marked[next.id]) {
-                    from[downAdj] = next.id;
-                    queue.enqueue(new NextVertex(downAdj, false));
-                }
-            }
+            reversed.adj(curr.id).forEach(adj -> {
+                if (!markedDown[adj])
+                    addNext(adj, curr.id, curr.up, from, queue);
+            });
         }
 
         return -1;
