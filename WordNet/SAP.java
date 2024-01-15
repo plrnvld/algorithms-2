@@ -28,59 +28,55 @@ public class SAP {
         if (v == w)
             return 0;
 
-        int len = 1;
         Queue<NextVertex> queue = new Queue<>();
         markedUp[v] = true;
         markedDown[v] = true;
 
         for (int adj : digraph.adj(v)) {
             from[adj] = v;
-            System.out.println("> Enqueue " + adj + " (len = " + len + ", up)");
             queue.enqueue(new NextVertex(adj, true));
         }
 
         for (int adj : reversed.adj(v)) {
             from[adj] = v;
-            System.out.println("> Enqueue " + adj + " (len = " + len + ", down)");
             queue.enqueue(new NextVertex(adj, false));
         }
 
         while (!queue.isEmpty()) {
             NextVertex curr = queue.dequeue();
-            System.out.println(">>> Dequeue " + curr.id + ", up=" + curr.up + ", from=" + from[curr.id]);
-
+            
             if (curr.up) {
                 markedUp[curr.id] = true;
                 markedDown[curr.id] = true;
-            }
-            else
+            } else
                 markedDown[curr.id] = true;
 
             if (curr.id == w) {
-                return len;
+                int pathLen = 1;
+                int pos = curr.id;
+                while (from[pos] != v) {
+                    pos = from[pos];
+                    pathLen += 1;
+                }
+
+                return pathLen;
             }
 
             if (curr.up) {
                 for (int upAdj : digraph.adj(curr.id)) {
-                    System.out.println("      Adjacent up: " + upAdj);
                     if (!markedUp[upAdj]) {
                         from[upAdj] = curr.id;
-                        System.out.println("> (curr.up = " + curr.up + ") Enqueue " + upAdj + " (len = " + len + ")");
                         queue.enqueue(new NextVertex(upAdj, true));
                     }
                 }
             }
 
             for (int downAdj : reversed.adj(curr.id)) {
-                System.out.println("      Adjacent down: " + downAdj);
-                if (!markedUp[downAdj] && !markedUp[downAdj]) {
+                if (!markedDown[downAdj]) {
                     from[downAdj] = curr.id;
-                    System.out.println("> (curr.up = " + curr.up + ") Enqueue " + downAdj + " (len = " + len + ")");
                     queue.enqueue(new NextVertex(downAdj, curr.up));
                 }
             }
-
-            len += 1;
         }
 
         return -1;
