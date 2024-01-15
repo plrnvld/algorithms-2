@@ -10,7 +10,7 @@ public class SAP {
 
     private final Digraph digraph;
     private final Digraph reversed;
-    
+
     // constructor takes a digraph (not necessarily a DAG)
     public SAP(Digraph G) {
         digraph = G;
@@ -19,8 +19,9 @@ public class SAP {
 
     // length of shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
-        boolean[] marked = new boolean[digraph.V()];
-        // int[] from = new int[digraph.V()];
+        boolean[] markedUp = new boolean[digraph.V()];
+        boolean[] markedDown = new boolean[digraph.V()];
+        int[] from = new int[digraph.V()];
         if (digraph.V() == 0)
             return -1;
 
@@ -29,47 +30,56 @@ public class SAP {
 
         int len = 1;
         Queue<NextVertex> queue = new Queue<>();
-        marked[v] = true;
-        
+        markedUp[v] = true;
+        markedDown[v] = true;
+
         for (int adj : digraph.adj(v)) {
-            // from[adj] = v;
-            System.out.println("> Enqueue " + adj + " (len = " + len + ", up)" );
+            from[adj] = v;
+            System.out.println("> Enqueue " + adj + " (len = " + len + ", up)");
             queue.enqueue(new NextVertex(adj, true));
         }
 
         for (int adj : reversed.adj(v)) {
-            // from[adj] = v;
-            System.out.println("> Enqueue " + adj + " (len = " + len + ", down)" );
+            from[adj] = v;
+            System.out.println("> Enqueue " + adj + " (len = " + len + ", down)");
             queue.enqueue(new NextVertex(adj, false));
         }
 
         while (!queue.isEmpty()) {
-            NextVertex next = queue.dequeue();
-            marked[next.id] = true;
-            System.out.println(">>> Dequeue " + next.id);
-            if (next.id == w) {
+            NextVertex curr = queue.dequeue();
+            System.out.println(">>> Dequeue " + curr.id + ", up=" + curr.up + ", from=" + from[curr.id]);
+
+            if (curr.up) {
+                markedUp[curr.id] = true;
+                markedDown[curr.id] = true;
+            }
+            else
+                markedDown[curr.id] = true;
+
+            if (curr.id == w) {
                 return len;
             }
 
-            if (next.up) {
-                for (int upAdj : digraph.adj(next.id)) {
-                    if (!marked[upAdj]) {
-                        // from[upAdj] = next.id;
-                        System.out.println("> Enqueue " + upAdj + " (len = " + len + ", up)" );
+            if (curr.up) {
+                for (int upAdj : digraph.adj(curr.id)) {
+                    System.out.println("      Adjacent up: " + upAdj);
+                    if (!markedUp[upAdj]) {
+                        from[upAdj] = curr.id;
+                        System.out.println("> (curr.up = " + curr.up + ") Enqueue " + upAdj + " (len = " + len + ")");
                         queue.enqueue(new NextVertex(upAdj, true));
                     }
                 }
             }
 
-            for (int downAdj : reversed.adj(next.id)) {
-                if (!marked[downAdj]) {
-                    // from[downAdj] = next.id;
-                    System.out.println("> Enqueue " + downAdj + " (len = " + len + ", up)" );
-                    queue.enqueue(new NextVertex(downAdj, false));
+            for (int downAdj : reversed.adj(curr.id)) {
+                System.out.println("      Adjacent down: " + downAdj);
+                if (!markedUp[downAdj] && !markedUp[downAdj]) {
+                    from[downAdj] = curr.id;
+                    System.out.println("> (curr.up = " + curr.up + ") Enqueue " + downAdj + " (len = " + len + ")");
+                    queue.enqueue(new NextVertex(downAdj, curr.up));
                 }
             }
 
-            
             len += 1;
         }
 
@@ -89,7 +99,7 @@ public class SAP {
 
         Queue<NextVertex> queue = new Queue<>();
         marked[v] = true;
-        
+
         for (int adj : digraph.adj(v)) {
             from[adj] = v;
             queue.enqueue(new NextVertex(adj, true));
@@ -109,6 +119,7 @@ public class SAP {
 
             if (next.up) {
                 for (int upAdj : digraph.adj(next.id)) {
+                    // System.out.println(" Adjacent up: " + upAdj);
                     if (!marked[next.id]) {
                         from[upAdj] = next.id;
                         queue.enqueue(new NextVertex(upAdj, true));
@@ -117,6 +128,7 @@ public class SAP {
             }
 
             for (int downAdj : reversed.adj(next.id)) {
+                // System.out.println(" Adjacent down: " + downAdj);
                 if (!marked[next.id]) {
                     from[downAdj] = next.id;
                     queue.enqueue(new NextVertex(downAdj, false));
@@ -135,7 +147,7 @@ public class SAP {
             Iterable<Integer> higher = digraph.adj(curr);
 
             boolean prevIsHigher = StreamSupport.stream(higher.spliterator(), false)
-                .anyMatch(h -> h == prev);
+                    .anyMatch(h -> h == prev);
 
             if (!prevIsHigher)
                 return curr;
