@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
@@ -96,14 +97,14 @@ public class SAP {
         return ancestorInPath(path(v, w));
     }
 
-    private List<Integer> path(Iterable<Integer> v, Iterable<Integer> w) {
-        List<Integer> target = new ArrayList<>();
+    private ArrayList<Integer> path(Iterable<Integer> v, Iterable<Integer> w) {
+        ArrayList<Integer> target = new ArrayList<>();
         v.forEach(target::add);
 
         return target;
     }
 
-    private int ancestorInPath(List<Integer> path) {
+    private int ancestorInPath(ArrayList<Integer> path) {
         int size = path.size();
 
         if (size == 0)
@@ -113,9 +114,34 @@ public class SAP {
             return path.get(0);
 
         int first = path.get(0);
-        int last = path.get(size - 1);
+        int second = path.get(1);
 
-        return first; // ########## Needs to be better
+        if (contains(digraph.adj(first), second))
+            return first;
+
+        int last = path.get(size - 1);
+        int prev = path.get(size - 2);
+        if (contains(reversed.adj(last), prev))
+            return last;
+
+        for (int i = 2; i < path.size() - 1; i++) {
+            int before = path.get(i - 1);
+            int after = path.get(i + 1);
+
+            if (contains(digraph.adj(i), before, after))
+                return path.get(i);
+        }
+
+        throw new RuntimeException("No ancestor found");    
+    }
+
+    private boolean contains(Iterable<Integer> items, int item) {
+        return StreamSupport.stream(items.spliterator(), false)
+                    .anyMatch(i -> item == i);
+    }
+
+    private boolean contains(Iterable<Integer> items, int item1, int item2) {
+        return contains(items, item1) && contains(items, item2);
     }
 
     private int pathSteps(List<Integer> path) {
