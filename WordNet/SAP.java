@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.StreamSupport;
 
 import edu.princeton.cs.algs4.Digraph;
@@ -21,7 +22,7 @@ public class SAP {
 
     // length of shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
-        return length(List.of(v), List.of(w));        
+        return length(List.of(v), List.of(w));
     }
 
     // a common ancestor of v and w that participates in a shortest ancestral path;
@@ -47,11 +48,11 @@ public class SAP {
         boolean[] markedUp = new boolean[digraph.V()];
         boolean[] markedDown = new boolean[digraph.V()];
         int[] from = new int[digraph.V()];
+        for (int i = 0; i < from.length; i++)
+            from[i] = -1;
 
         if (digraph.V() == 0)
             return result;
-
-        // #########    
 
         Queue<NextVertex> queue = new Queue<>();
         for (int v : vs) {
@@ -62,47 +63,63 @@ public class SAP {
 
         while (!queue.isEmpty()) {
             NextVertex curr = queue.dequeue();
+            if (curr.up)
+                System.out.println("> Dequeue [up] id=" + curr.id);
+            else
+                System.out.println("> Dequeue [down] id=" + curr.id);
 
-            if (curr.up) {
+            if (curr.up)
                 markedUp[curr.id] = true;
-                markedDown[curr.id] = true;
-            } else
+            else
                 markedDown[curr.id] = true;
 
             if (contains(ws, curr.id)) {
-                // Reached destination
-                
-            }
+                // Destination reached
+                Stack<Integer> stack = new Stack<>();
 
-            if (curr.id == w) {
-                int pathLen = 1;
-                int pos = curr.id;
-                while (from[pos] != v) {
-                    pos = from[pos];
-                    pathLen += 1;
+                stack.push(curr.id);
+
+                int prev = from[curr.id];
+                System.out.println("===> prev for " + curr.id + " = " + prev);
+
+                // ######### Need to fix circular path for digraph9-2-4.txt
+
+                while (prev != -1) {
+                    stack.push(prev);
+                    System.out.println("====> prev for " + prev + " = " + from[prev]);
+                    prev = from[prev];
                 }
 
-                return pathLen;
+                System.out.println("PATH");
+                for (int s : stack) {
+                    result.add(s);
+                    System.out.print(s + " ");
+                }
+                System.out.println();
+
+                return result;
             }
 
-            digraph.adj(curr.id).forEach(adj -> {
-                if (!markedUp[adj])
-                    addNext(adj, curr.id, curr.up, from, queue);
-            });
+            if (curr.up) {
+                digraph.adj(curr.id).forEach(adj -> {
+                    if (!markedUp[adj]) {
+                        queue.enqueue(new NextVertex(adj, true));
+                        from[adj] = curr.id;
+                        System.out.println(">> Enqueue [up] id=" + adj + " from=" + curr.id);
+                    }
+                });
+            }
 
             reversed.adj(curr.id).forEach(adj -> {
-                if (!markedDown[adj])
-                    addNext(adj, curr.id, curr.up, from, queue);
+                if (!markedDown[adj]) {
+                    queue.enqueue(new NextVertex(adj, false));
+                    from[adj] = curr.id;
+                    System.out.println(">> Enqueue [down] id=" + adj + " from=" + curr.id);
+                }
             });
         }
 
-        return -1;
-        
-        
-        ArrayList<Integer> target = new ArrayList<>();
-        v.forEach(target::add);
-
-        return target;
+        return result;
     }
 
     private int ancestorInPath(ArrayList<Integer> path) {
@@ -133,12 +150,12 @@ public class SAP {
                 return path.get(i);
         }
 
-        throw new RuntimeException("No ancestor found");    
+        throw new RuntimeException("No ancestor found");
     }
 
     private boolean contains(Iterable<Integer> items, int item) {
         return StreamSupport.stream(items.spliterator(), false)
-                    .anyMatch(i -> item == i);
+                .anyMatch(i -> item == i);
     }
 
     private boolean contains(Iterable<Integer> items, int item1, int item2) {
