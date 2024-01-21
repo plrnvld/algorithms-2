@@ -1,4 +1,5 @@
-import java.util.stream.StreamSupport;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
@@ -19,6 +20,9 @@ public class SAP {
 
     // length of shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
+        // return length(List.of(v), List.of(w));
+
+        // #################
         boolean[] markedUp = new boolean[digraph.V()];
         boolean[] markedDown = new boolean[digraph.V()];
         int[] from = new int[digraph.V()];
@@ -77,76 +81,47 @@ public class SAP {
     // a common ancestor of v and w that participates in a shortest ancestral path;
     // -1 if no such path
     public int ancestor(int v, int w) {
-        boolean[] markedUp = new boolean[digraph.V()];
-        boolean[] markedDown = new boolean[digraph.V()];
-        int[] from = new int[digraph.V()];
-        if (digraph.V() == 0)
-            return -1;
-
-        if (v == w)
-            return 0;
-
-        Queue<NextVertex> queue = new Queue<>();
-        markedUp[v] = true;
-        markedDown[v] = true;
-
-        digraph.adj(v).forEach(adj -> addNext(adj, v, true, from, queue));
-        reversed.adj(v).forEach(adj -> addNext(adj, v, false, from, queue));
-
-        while (!queue.isEmpty()) {
-            NextVertex curr = queue.dequeue();
-
-            if (curr.up) {
-                markedUp[curr.id] = true;
-                markedDown[curr.id] = true;
-            } else
-                markedDown[curr.id] = true;
-
-            if (curr.id == w) {
-                return detectAncestor(w, from);
-            }
-
-            digraph.adj(curr.id).forEach(adj -> {
-                if (!markedUp[adj])
-                    addNext(adj, curr.id, curr.up, from, queue);
-            });
-
-            reversed.adj(curr.id).forEach(adj -> {
-                if (!markedDown[adj])
-                    addNext(adj, curr.id, curr.up, from, queue);
-            });
-        }
-
-        return -1;
-    }
-
-    private int detectAncestor(int w, int[] from) {
-        int curr = w;
-        while (true) {
-            int prev = from[curr];
-
-            Iterable<Integer> higher = digraph.adj(curr);
-
-            boolean prevIsHigher = StreamSupport.stream(higher.spliterator(), false)
-                    .anyMatch(h -> h == prev);
-
-            if (!prevIsHigher)
-                return curr;
-
-            curr = prev;
-        }
+        return ancestor(List.of(v), List.of(w));
     }
 
     // length of shortest ancestral path between any vertex in v and any vertex in
     // w; -1 if no such path
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
-        return -1;
+        return pathSteps(path(v, w));
     }
 
     // a common ancestor that participates in shortest ancestral path; -1 if no such
     // path
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
-        return -1;
+        return ancestorInPath(path(v, w));
+    }
+
+    private List<Integer> path(Iterable<Integer> v, Iterable<Integer> w) {
+        List<Integer> target = new ArrayList<>();
+        v.forEach(target::add);
+
+        return target;
+    }
+
+    private int ancestorInPath(List<Integer> path) {
+        int size = path.size();
+
+        if (size == 0)
+            return -1;
+
+        if (size == 1)
+            return path.get(0);
+
+        int first = path.get(0);
+        int last = path.get(size - 1);
+
+        return first; // ########## Needs to be better
+    }
+
+    private int pathSteps(List<Integer> path) {
+        int size = path.size();
+
+        return size == 0 ? -1 : size;
     }
 
     // do unit testing of this class
