@@ -21,24 +21,44 @@ public class SAP {
 
     // length of shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
-        // return length(List.of(v), List.of(w));
+        return length(List.of(v), List.of(w));        
+    }
 
-        // #################
+    // a common ancestor of v and w that participates in a shortest ancestral path;
+    // -1 if no such path
+    public int ancestor(int v, int w) {
+        return ancestor(List.of(v), List.of(w));
+    }
+
+    // length of shortest ancestral path between any vertex in v and any vertex in
+    // w; -1 if no such path
+    public int length(Iterable<Integer> v, Iterable<Integer> w) {
+        return path(v, w).size() - 1;
+    }
+
+    // a common ancestor that participates in shortest ancestral path; -1 if no such
+    // path
+    public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
+        return ancestorInPath(path(v, w));
+    }
+
+    private ArrayList<Integer> path(Iterable<Integer> vs, Iterable<Integer> ws) {
+        ArrayList<Integer> result = new ArrayList<>();
         boolean[] markedUp = new boolean[digraph.V()];
         boolean[] markedDown = new boolean[digraph.V()];
         int[] from = new int[digraph.V()];
-        if (digraph.V() == 0)
-            return -1;
 
-        if (v == w)
-            return 0;
+        if (digraph.V() == 0)
+            return result;
+
+        // #########    
 
         Queue<NextVertex> queue = new Queue<>();
-        markedUp[v] = true;
-        markedDown[v] = true;
-
-        digraph.adj(v).forEach(adj -> addNext(adj, v, true, from, queue));
-        reversed.adj(v).forEach(adj -> addNext(adj, v, false, from, queue));
+        for (int v : vs) {
+            queue.enqueue(new NextVertex(v, true));
+            markedUp[v] = true;
+            markedDown[v] = true;
+        }
 
         while (!queue.isEmpty()) {
             NextVertex curr = queue.dequeue();
@@ -48,6 +68,11 @@ public class SAP {
                 markedDown[curr.id] = true;
             } else
                 markedDown[curr.id] = true;
+
+            if (contains(ws, curr.id)) {
+                // Reached destination
+                
+            }
 
             if (curr.id == w) {
                 int pathLen = 1;
@@ -72,32 +97,8 @@ public class SAP {
         }
 
         return -1;
-    }
-
-    private void addNext(int nextId, int currId, boolean currUp, int[] from, Queue<NextVertex> queue) {
-        from[nextId] = currId;
-        queue.enqueue(new NextVertex(nextId, currUp));
-    }
-
-    // a common ancestor of v and w that participates in a shortest ancestral path;
-    // -1 if no such path
-    public int ancestor(int v, int w) {
-        return ancestor(List.of(v), List.of(w));
-    }
-
-    // length of shortest ancestral path between any vertex in v and any vertex in
-    // w; -1 if no such path
-    public int length(Iterable<Integer> v, Iterable<Integer> w) {
-        return pathSteps(path(v, w));
-    }
-
-    // a common ancestor that participates in shortest ancestral path; -1 if no such
-    // path
-    public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
-        return ancestorInPath(path(v, w));
-    }
-
-    private ArrayList<Integer> path(Iterable<Integer> v, Iterable<Integer> w) {
+        
+        
         ArrayList<Integer> target = new ArrayList<>();
         v.forEach(target::add);
 
@@ -142,12 +143,6 @@ public class SAP {
 
     private boolean contains(Iterable<Integer> items, int item1, int item2) {
         return contains(items, item1) && contains(items, item2);
-    }
-
-    private int pathSteps(List<Integer> path) {
-        int size = path.size();
-
-        return size == 0 ? -1 : size;
     }
 
     // do unit testing of this class
