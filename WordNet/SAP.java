@@ -63,10 +63,10 @@ public class SAP {
 
         while (!queue.isEmpty()) {
             NextVertex curr = queue.dequeue();
-            if (curr.up)
-                System.out.println("> Dequeue [up] id=" + curr.id);
-            else
-                System.out.println("> Dequeue [down] id=" + curr.id);
+            // if (curr.up)
+            //     System.out.println("> Dequeue [up] id=" + curr.id);
+            // else
+            //     System.out.println("> Dequeue [down] id=" + curr.id);
 
             if (curr.up)
                 markedUp[curr.id] = true;
@@ -80,22 +80,20 @@ public class SAP {
                 stack.push(curr.id);
 
                 int prev = from[curr.id];
-                System.out.println("===> prev for " + curr.id + " = " + prev);
-
-                // ######### Need to fix circular path for digraph9-2-4.txt
+                // System.out.println("===> prev for " + curr.id + " = " + prev);
 
                 while (prev != -1) {
                     stack.push(prev);
-                    System.out.println("====> prev for " + prev + " = " + from[prev]);
+                    // System.out.println("====> prev for " + prev + " = " + from[prev]);
                     prev = from[prev];
                 }
 
-                System.out.println("PATH");
+                // System.out.println("PATH");
                 for (int s : stack) {
                     result.add(s);
-                    System.out.print(s + " ");
+                    // System.out.print(s + " ");
                 }
-                System.out.println();
+                // System.out.println();
 
                 return result;
             }
@@ -105,16 +103,16 @@ public class SAP {
                     if (!markedUp[adj]) {
                         queue.enqueue(new NextVertex(adj, true));
                         from[adj] = curr.id;
-                        System.out.println(">> Enqueue [up] id=" + adj + " from=" + curr.id);
+                        // System.out.println(">> Enqueue [up] id=" + adj + " from=" + curr.id);
                     }
                 });
             }
 
             reversed.adj(curr.id).forEach(adj -> {
-                if (!markedDown[adj]) {
+                if (!markedUp[adj] &&!markedDown[adj]) {
                     queue.enqueue(new NextVertex(adj, false));
                     from[adj] = curr.id;
-                    System.out.println(">> Enqueue [down] id=" + adj + " from=" + curr.id);
+                    // System.out.println(">> Enqueue [down] id=" + adj + " from=" + curr.id);
                 }
             });
         }
@@ -134,7 +132,7 @@ public class SAP {
         int first = path.get(0);
         int second = path.get(1);
 
-        if (contains(digraph.adj(first), second))
+        if (contains(reversed.adj(first), second))
             return first;
 
         int last = path.get(size - 1);
@@ -146,7 +144,7 @@ public class SAP {
             int before = path.get(i - 1);
             int after = path.get(i + 1);
 
-            if (contains(digraph.adj(i), before, after))
+            if (contains(reversed.adj(i), before, after))
                 return path.get(i);
         }
 
