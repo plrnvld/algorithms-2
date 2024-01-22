@@ -1,11 +1,11 @@
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 import java.util.stream.StreamSupport;
 
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Queue;
+import edu.princeton.cs.algs4.Stack;
 import edu.princeton.cs.algs4.StdIn;
 import edu.princeton.cs.algs4.StdOut;
 
@@ -64,9 +64,9 @@ public class SAP {
         while (!queue.isEmpty()) {
             NextVertex curr = queue.dequeue();
             // if (curr.up)
-            //     System.out.println("> Dequeue [up] id=" + curr.id);
+            // System.out.println("> Dequeue [up] id=" + curr.id);
             // else
-            //     System.out.println("> Dequeue [down] id=" + curr.id);
+            // System.out.println("> Dequeue [down] id=" + curr.id);
 
             if (curr.up)
                 markedUp[curr.id] = true;
@@ -109,7 +109,7 @@ public class SAP {
             }
 
             reversed.adj(curr.id).forEach(adj -> {
-                if (!markedUp[adj] &&!markedDown[adj]) {
+                if (!markedUp[adj] && !markedDown[adj]) {
                     queue.enqueue(new NextVertex(adj, false));
                     from[adj] = curr.id;
                     // System.out.println(">> Enqueue [down] id=" + adj + " from=" + curr.id);
@@ -148,7 +148,9 @@ public class SAP {
                 return path.get(i);
         }
 
-        throw new RuntimeException("No ancestor found");
+        // throw new RuntimeException("No ancestor found");
+
+        return -2;
     }
 
     private boolean contains(Iterable<Integer> items, int item) {
