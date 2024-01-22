@@ -140,12 +140,28 @@ public class SAP {
         if (contains(reversed.adj(last), prev))
             return last;
 
-        for (int i = 2; i < path.size() - 1; i++) {
+        for (int i = 1; i < path.size() - 1; i++) {
             int before = path.get(i - 1);
+            int curr = path.get(i);
             int after = path.get(i + 1);
 
-            if (contains(reversed.adj(i), before, after))
+            Iterable<Integer> adjacentsDown = reversed.adj(curr);
+            boolean isAncestor = contains(adjacentsDown, before, after);
+
+            // System.out.println(
+            // "> Checking if " + curr + " (i=" + i + ") is ancestor, before=" + before + "
+            // after=" + after
+            // + " :" + isAncestor);
+
+            // System.out.print(" adjacents down:");
+            // for (int adj : adjacentsDown) {
+            // System.out.print(" "+ adj);
+            // }
+            // System.out.println();
+
+            if (isAncestor)
                 return path.get(i);
+
         }
 
         // throw new RuntimeException("No ancestor found");
