@@ -33,17 +33,26 @@ public class SAP {
 
     // length of shortest ancestral path between any vertex in v and any vertex in
     // w; -1 if no such path
-    public int length(Iterable<Integer> v, Iterable<Integer> w) {
-        return path(v, w).size() - 1;
+    public int length(Iterable<Integer> vs, Iterable<Integer> ws) {
+        return path(vs, ws).size() - 1;
     }
 
     // a common ancestor that participates in shortest ancestral path; -1 if no such
     // path
-    public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
-        return ancestorInPath(path(v, w));
+    public int ancestor(Iterable<Integer> vs, Iterable<Integer> ws) {
+        return ancestorInPath(path(vs, ws));
     }
 
     private ArrayList<Integer> path(Iterable<Integer> vs, Iterable<Integer> ws) {
+        for (Integer v : vs) {
+            if (v == null || v < 0 || v >= digraph.V())
+                throw new IllegalArgumentException();
+        }
+        for (Integer w : ws) {
+            if (w == null || w < 0 || w >= digraph.V())
+                throw new IllegalArgumentException();
+        }
+
         ArrayList<Integer> result = new ArrayList<>();
         boolean[] markedUp = new boolean[digraph.V()];
         boolean[] markedDown = new boolean[digraph.V()];
@@ -102,8 +111,9 @@ public class SAP {
                 digraph.adj(curr.id).forEach(adj -> {
                     if (!markedUp[adj]) {
                         queue.enqueue(new NextVertex(adj, true));
-                        from[adj] = curr.id;
-                        // System.out.println(">> Enqueue [up] id=" + adj + " from=" + curr.id);
+                        if (from[adj] == -1)
+                            from[adj] = curr.id;
+                        // System.out.println(" > Enqueue [up] id=" + adj + " from=" + curr.id);
                     }
                 });
             }
@@ -111,10 +121,13 @@ public class SAP {
             reversed.adj(curr.id).forEach(adj -> {
                 if (!markedUp[adj] && !markedDown[adj]) {
                     queue.enqueue(new NextVertex(adj, false));
-                    from[adj] = curr.id;
-                    // System.out.println(">> Enqueue [down] id=" + adj + " from=" + curr.id);
+                    if (from[adj] == -1)
+                        from[adj] = curr.id;
+                    // System.out.println(" > Enqueue [down] id=" + adj + " from=" + curr.id);
                 }
             });
+
+            // System.out.println();
         }
 
         return result;
@@ -148,14 +161,14 @@ public class SAP {
             Iterable<Integer> adjacentsDown = reversed.adj(curr);
             boolean isAncestor = contains(adjacentsDown, before, after);
 
-            // System.out.println(
-            // "> Checking if " + curr + " (i=" + i + ") is ancestor, before=" + before + "
-            // after=" + after
+            // System.out
+            // .println("> Checking if " + curr + " (i=" + i + ") is ancestor, before=" +
+            // before + "after=" + after
             // + " :" + isAncestor);
 
             // System.out.print(" adjacents down:");
             // for (int adj : adjacentsDown) {
-            // System.out.print(" "+ adj);
+            // System.out.print(" " + adj);
             // }
             // System.out.println();
 

@@ -7,11 +7,14 @@ import edu.princeton.cs.algs4.DirectedCycle;
 import edu.princeton.cs.algs4.DirectedDFS;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.ST;
+import edu.princeton.cs.algs4.StdIn;
+import edu.princeton.cs.algs4.StdOut;
 
 public class WordNet {
 
     private final ST<String, List<Integer>> nounTable;
     private final Digraph digraph;
+    private final String[] nounSets;
 
     // constructor takes the name of the two input files
     public WordNet(String synsets, String hypernyms) {
@@ -19,12 +22,14 @@ public class WordNet {
             throw new IllegalArgumentException();
 
         String[] synsetLines = new In(synsets).readAllLines();
+        nounSets = new String[synsetLines.length];
         nounTable = new ST<>();
 
         digraph = new Digraph(synsetLines.length);
 
         for (int i = 0; i < synsetLines.length; i++) {
             String[] nouns = synsetLines[i].split(",")[1].split(" ");
+            nounSets[i] = synsetLines[i].split(",")[1];
             for (String noun : nouns) {
                 if (nounTable.contains(noun))
                     nounTable.get(noun).add(i);
@@ -99,29 +104,38 @@ public class WordNet {
         if (nounA == null || nounB == null || !isNoun(nounA) || !isNoun(nounB))
             throw new IllegalArgumentException();
 
-        return null;
+        SAP sap = new SAP(digraph);
+        int ancestor = sap.ancestor(nounTable.get(nounA), nounTable.get(nounB));
 
-        // Sap.ancestor.join nouns
+        if (ancestor == -1)
+            return null;
+
+        return nounSets[ancestor];
     }
 
     // do unit testing of this class
     public static void main(String[] args) {
-        System.out.println("Let's work");
-
-        System.out.println(args.length);
-
+        WordNet wordNet;
+        
         if (args.length == 2) {
             System.out.println("Using arguments: " + args[0] + ", " + args[1]);
-            WordNet wordNet = new WordNet(args[0], args[1]);
-
-            System.out.println(wordNet.digraph.toString());
+            wordNet = new WordNet(args[0], args[1]);
         } else if (args.length == 0) {
             final String synsetsFile = "./testfiles/synsets.txt";
             final String hypernymsFile = "./testfiles/hypernyms.txt";
             System.out.println("Using default files: " + synsetsFile + ", " + hypernymsFile);
-            WordNet wordNet = new WordNet(synsetsFile, hypernymsFile);
+            wordNet = new WordNet(synsetsFile, hypernymsFile);            
+        } else {
+            throw new IllegalArgumentException("Zero or two files required as arguments");
+        }
 
-            System.out.println(wordNet.digraph.toString());
+        while (!StdIn.isEmpty()) {
+            String nounA = StdIn.readString();
+            String nounB = StdIn.readString();
+            
+            int distance = wordNet.distance(nounA, nounB);
+            String sap = wordNet.sap(nounA, nounB);
+            StdOut.printf("distance = %d, sap = %s\n", distance, sap);
         }
     }
 }
