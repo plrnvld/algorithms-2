@@ -9,7 +9,7 @@ public class SeamCarver {
         if (picture == null)
             throw new IllegalArgumentException();
 
-        pic = picture;
+        pic = new Picture(picture);
     }
 
     // current picture
@@ -47,13 +47,13 @@ public class SeamCarver {
 
     // remove horizontal seam from current picture
     public void removeHorizontalSeam(int[] seam) {
-        if (seam == null)
+        if (seam == null || height() <= 1 || seam.length != width())
             throw new IllegalArgumentException();
     }
 
     // remove vertical seam from current picture
     public void removeVerticalSeam(int[] seam) {
-        if (seam == null)
+        if (seam == null || width() <= 1 || seam.length != height())
             throw new IllegalArgumentException();
     }
 
