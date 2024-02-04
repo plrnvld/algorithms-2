@@ -1,5 +1,4 @@
 import java.awt.Color;
-
 import edu.princeton.cs.algs4.Picture;
 
 public class SeamCarver {
@@ -68,12 +67,40 @@ public class SeamCarver {
     public void removeHorizontalSeam(int[] seam) {
         if (seam == null || height() <= 1 || seam.length != width())
             throw new IllegalArgumentException();
+
+        Picture newPicture = new Picture(picture.width(), picture.height() - 1);
+        for (int col = 0; col < newPicture.width(); col++) {
+            int removeIndex = seam[col];
+
+            for (int row = 0; row < newPicture.height(); row++) {
+                int skip = row >= removeIndex ? 1 : 0;
+
+                int originalRGB = picture.getRGB(col, row + skip);
+                newPicture.setRGB(col, row, originalRGB);
+            }
+        }
+
+        picture = newPicture;
     }
 
     // remove vertical seam from current picture
     public void removeVerticalSeam(int[] seam) {
         if (seam == null || width() <= 1 || seam.length != height())
             throw new IllegalArgumentException();
+
+        Picture newPicture = new Picture(picture.width() - 1, picture.height());
+        for (int row = 0; row < newPicture.height(); row++) {
+            int removeIndex = seam[row];
+
+            for (int col = 0; col < newPicture.width(); col++) {
+                int skip = col >= removeIndex ? 1 : 0;
+
+                int originalRGB = picture.getRGB(col + skip, row);
+                newPicture.setRGB(col, row, originalRGB);
+            }
+        }
+
+        picture = newPicture;
     }
 
     // unit testing (optional)
