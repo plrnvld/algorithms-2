@@ -152,6 +152,9 @@ public class SeamCarver {
         for (int col = 0; col < newPicture.width(); col++) {
             int removeIndex = seam[col];
 
+            if (removeIndex < 0 || removeIndex >= picture.height())
+                throw new IllegalArgumentException();
+
             for (int row = 0; row < newPicture.height(); row++) {
                 int skip = row >= removeIndex ? 1 : 0;
 
@@ -171,6 +174,9 @@ public class SeamCarver {
         Picture newPicture = new Picture(picture.width() - 1, picture.height());
         for (int row = 0; row < newPicture.height(); row++) {
             int removeIndex = seam[row];
+
+            if (removeIndex < 0 || removeIndex >= picture.width())
+                throw new IllegalArgumentException();
 
             for (int col = 0; col < newPicture.width(); col++) {
                 int skip = col >= removeIndex ? 1 : 0;
