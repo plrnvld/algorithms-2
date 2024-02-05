@@ -137,6 +137,9 @@ public class SeamCarver {
     }
 
     private int edgeIdToCol(int edgeId) {
+        if (edgeId < picture.width())
+            return edgeId;
+
         int wholeRows = edgeId % picture.width();
         return edgeId - wholeRows * picture.width();
     }
