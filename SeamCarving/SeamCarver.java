@@ -66,19 +66,28 @@ public class SeamCarver {
 
     // sequence of indices for vertical seam
     public int[] findVerticalSeam() {
+        int[] verticalSeam = new int[picture.height()];
 
         DigraphWithEndPoints digraphWithEndPoints = BuildVerticalDigraph();
 
-        DijkstraSP DijkstraSP = new DijkstraSP(digraphWithEndPoints.digraph, digraphWithEndPoints.startEdge);
+        DijkstraSP dijkstra = new DijkstraSP(digraphWithEndPoints.digraph, digraphWithEndPoints.startEdge);
 
-        return new int[0];
+        Iterable<DirectedEdge> pathForSeam = dijkstra.pathTo(digraphWithEndPoints.targetEdge);
+
+        int count = 0;
+        for (DirectedEdge edge : pathForSeam) {
+            verticalSeam[count] = edgeIdToCol(edge.to());
+            count += 1;
+        }
+
+        return verticalSeam;
     }
 
     private DigraphWithEndPoints BuildVerticalDigraph() {
         int numPictureEdges = picture.width() * picture.height();
         startEdge = numPictureEdges;
         targetEdge = numPictureEdges + 1;
-        int numEdges = numPictureEdges + 2; // Start and Target are extra edges
+        int numEdges = numPictureEdges + 2; // start and target are extra edges
 
         int numVerticesVertical = picture.width() * (picture.height() + 2);
         EdgeWeightedDigraph digraph = new EdgeWeightedDigraph(numVerticesVertical, numEdges);
@@ -90,11 +99,32 @@ public class SeamCarver {
             digraph.addEdge(new DirectedEdge(startEdge, edgeId, energy(col, firstRow)));
         }
 
-        // TODO: add all other edges
+        for (int row = 0; row < picture.height() - 1; row++) // Connect every row to the next one, last row can be
+                                                             // skipped here
+            for (int col = 0; col < picture.width(); col++) {
+                int fromId = verticalEdgeId(col, row);
+                int nextRow = row + 1;
+
+                // Down and left
+                if (col - 1 >= 0) {
+                    int toId1 = verticalEdgeId(col - 1, nextRow);
+                    digraph.addEdge(new DirectedEdge(fromId, toId1, energy(col - 1, nextRow)));
+                }
+
+                // Straight down
+                int toId2 = verticalEdgeId(col, nextRow);
+                digraph.addEdge(new DirectedEdge(fromId, toId2, energy(col, nextRow)));
+
+                // Down and right
+                if (col + 1 < picture.width()) {
+                    int toId3 = verticalEdgeId(col + 1, row + 1);
+                    digraph.addEdge(new DirectedEdge(fromId, toId3, energy(col + 1, nextRow)));
+                }
+            }
 
         // Connect last row of picture to targetEdge
         int lastRow = picture.height() - 1;
-        for (int col = 0; col < picture.width(); col++) {            
+        for (int col = 0; col < picture.width(); col++) {
             int edgeId = verticalEdgeId(col, lastRow);
             digraph.addEdge(new DirectedEdge(edgeId, targetEdge, 0));
         }
@@ -102,9 +132,13 @@ public class SeamCarver {
         return new DigraphWithEndPoints(digraph, startEdge, targetEdge);
     }
 
-    private int verticalEdgeId(int col, int row)
-    {
+    private int verticalEdgeId(int col, int row) {
         return col + row * picture.width();
+    }
+
+    private int edgeIdToCol(int edgeId) {
+        int wholeRows = edgeId % picture.width();
+        return edgeId - wholeRows * picture.width();
     }
 
     // remove horizontal seam from current picture
