@@ -68,22 +68,23 @@ public class SeamCarver {
     public int[] findVerticalSeam() {
         int[] verticalSeam = new int[picture.height()];
 
-        DigraphWithEndPoints digraphWithEndPoints = BuildVerticalDigraph();
-
+        DigraphWithEndPoints digraphWithEndPoints = buildVerticalDigraph();
         DijkstraSP dijkstra = new DijkstraSP(digraphWithEndPoints.digraph, digraphWithEndPoints.startEdge);
-
         Iterable<DirectedEdge> pathForSeam = dijkstra.pathTo(digraphWithEndPoints.targetEdge);
 
         int count = 0;
+
         for (DirectedEdge edge : pathForSeam) {
-            verticalSeam[count] = edgeIdToCol(edge.to());
-            count += 1;
+            if (count < verticalSeam.length) { // Last step to target is not part of the seam
+                verticalSeam[count] = edgeIdToCol(edge.to());
+                count += 1;
+            }
         }
 
         return verticalSeam;
     }
 
-    private DigraphWithEndPoints BuildVerticalDigraph() {
+    private DigraphWithEndPoints buildVerticalDigraph() {
         int numPictureEdges = picture.width() * picture.height();
         startEdge = numPictureEdges;
         targetEdge = numPictureEdges + 1;
