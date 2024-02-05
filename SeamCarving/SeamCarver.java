@@ -83,15 +83,16 @@ public class SeamCarver {
         int numVerticesVertical = picture.width() * (picture.height() + 2);
         EdgeWeightedDigraph digraph = new EdgeWeightedDigraph(numVerticesVertical, numEdges);
 
-        // Connect picture to startEdge
+        // Connect startEdge to first row of picture
         int firstRow = 0;
         for (int col = 0; col < picture.width(); col++) {
             int edgeId = verticalEdgeId(col, firstRow);
             digraph.addEdge(new DirectedEdge(startEdge, edgeId, energy(col, firstRow)));
         }
 
+        // TODO: add all other edges
 
-        // Connect picture to endEdge
+        // Connect last row of picture to targetEdge
         int lastRow = picture.height() - 1;
         for (int col = 0; col < picture.width(); col++) {            
             int edgeId = verticalEdgeId(col, lastRow);
