@@ -1,13 +1,19 @@
 import java.awt.Color;
+
+import edu.princeton.cs.algs4.DijkstraSP;
+import edu.princeton.cs.algs4.DirectedEdge;
+import edu.princeton.cs.algs4.EdgeWeightedDigraph;
 import edu.princeton.cs.algs4.Picture;
 
 public class SeamCarver {
 
     private Picture picture;
+    private int startEdge;
+    private int targetEdge;
 
     // create a seam carver object based on the given picture
     public SeamCarver(Picture picture) {
-        if (picture == null)
+        if (picture == null || picture.width() == 0 || picture.height() == 0)
             throw new IllegalArgumentException();
 
         this.picture = new Picture(picture);
@@ -60,7 +66,44 @@ public class SeamCarver {
 
     // sequence of indices for vertical seam
     public int[] findVerticalSeam() {
+
+        DigraphWithEndPoints digraphWithEndPoints = BuildVerticalDigraph();
+
+        DijkstraSP DijkstraSP = new DijkstraSP(digraphWithEndPoints.digraph, digraphWithEndPoints.startEdge);
+
         return new int[0];
+    }
+
+    private DigraphWithEndPoints BuildVerticalDigraph() {
+        int numPictureEdges = picture.width() * picture.height();
+        startEdge = numPictureEdges;
+        targetEdge = numPictureEdges + 1;
+        int numEdges = numPictureEdges + 2; // Start and Target are extra edges
+
+        int numVerticesVertical = picture.width() * (picture.height() + 2);
+        EdgeWeightedDigraph digraph = new EdgeWeightedDigraph(numVerticesVertical, numEdges);
+
+        // Connect picture to startEdge
+        int firstRow = 0;
+        for (int col = 0; col < picture.width(); col++) {
+            int edgeId = verticalEdgeId(col, firstRow);
+            digraph.addEdge(new DirectedEdge(startEdge, edgeId, energy(col, firstRow)));
+        }
+
+
+        // Connect picture to endEdge
+        int lastRow = picture.height() - 1;
+        for (int col = 0; col < picture.width(); col++) {            
+            int edgeId = verticalEdgeId(col, lastRow);
+            digraph.addEdge(new DirectedEdge(edgeId, targetEdge, 0));
+        }
+
+        return new DigraphWithEndPoints(digraph, startEdge, targetEdge);
+    }
+
+    private int verticalEdgeId(int col, int row)
+    {
+        return col + row * picture.width();
     }
 
     // remove horizontal seam from current picture
@@ -101,6 +144,18 @@ public class SeamCarver {
         }
 
         picture = newPicture;
+    }
+
+    private class DigraphWithEndPoints {
+        final EdgeWeightedDigraph digraph;
+        final int startEdge;
+        final int targetEdge;
+
+        public DigraphWithEndPoints(EdgeWeightedDigraph digraph, int startEdge, int targetEdge) {
+            this.digraph = digraph;
+            this.startEdge = startEdge;
+            this.targetEdge = targetEdge;
+        }
     }
 
     // unit testing (optional)
