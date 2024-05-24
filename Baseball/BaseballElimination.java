@@ -1,3 +1,6 @@
+import java.util.stream.StreamSupport;
+
+import edu.princeton.cs.algs4.FordFulkerson;
 import edu.princeton.cs.algs4.ST;
 
 class BaseballElimination {
@@ -8,12 +11,16 @@ class BaseballElimination {
     private int r[];
     private int g[][];
     private int currMaxWins;
+    private FordFulkerson ff;
 
     // create a baseball division from given filename in format specified below
     public BaseballElimination(String filename) {
         teamsTable = new ST<>();
 
-        // ############### Read teams, add indexes
+        // ############### Read teams, add indexes, create FlowNetwork, run
+        // FordFulkerson
+
+        ff = new FordFulkerson(null, -1, -2);
 
         for (var team : teams()) {
             int wins = wins(team);
@@ -62,7 +69,7 @@ class BaseballElimination {
 
     // is given team eliminated?
     public boolean isEliminated(String team) {
-        if (wins(team) + remaining(team) < currMaxWins)
+        if (wins(team) + remaining(team) < currMaxWins) // Trivial elimination
             return true;
 
         return false;
@@ -71,9 +78,12 @@ class BaseballElimination {
     // subset R of teams that eliminates given team; null
     // if not eliminated
     public Iterable<String> certificateOfElimination(String team) {
-        int index = teamIndex(team);
+        if (!isEliminated(team))
+            return null;
 
-        return null;
+        return () -> StreamSupport.stream(teams().spliterator(), false)
+                .filter(t -> ff.inCut(teamIndex(t)))
+                .iterator();
     }
 
     public static void main(String[] args) {
