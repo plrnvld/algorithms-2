@@ -2,6 +2,7 @@ import java.util.stream.StreamSupport;
 
 import edu.princeton.cs.algs4.FordFulkerson;
 import edu.princeton.cs.algs4.ST;
+import edu.princeton.cs.algs4.StdOut;
 
 class BaseballElimination {
 
@@ -11,6 +12,7 @@ class BaseballElimination {
     private int r[];
     private int g[][];
     private int currMaxWins;
+    private long allGamesRemaining;
     private FordFulkerson ff;
 
     // create a baseball division from given filename in format specified below
@@ -26,6 +28,10 @@ class BaseballElimination {
             int wins = wins(team);
             currMaxWins = Math.max(wins, currMaxWins);
         }
+
+        allGamesRemaining = StreamSupport.stream(teams().spliterator(), false)
+                .map(t -> (long) remaining(t))
+                .reduce(0l, Long::sum);
     }
 
     private int teamIndex(String team) {
@@ -72,10 +78,6 @@ class BaseballElimination {
         if (wins(team) + remaining(team) < currMaxWins) // Trivial elimination
             return true;
 
-        long allGamesRemaining = StreamSupport.stream(teams().spliterator(), false)
-            .map(t -> (long)remaining(t))
-            .reduce(0l, Long::sum);
-
         long maxFlow = Math.round(ff.value());
         return allGamesRemaining == maxFlow;
     }
@@ -92,6 +94,17 @@ class BaseballElimination {
     }
 
     public static void main(String[] args) {
-        // some code
+        BaseballElimination division = new BaseballElimination(args[0]);
+        for (String team : division.teams()) {
+            if (division.isEliminated(team)) {
+                StdOut.print(team + " is eliminated by the subset R = { ");
+                for (String t : division.certificateOfElimination(team)) {
+                    StdOut.print(t + " ");
+                }
+                StdOut.println("}");
+            } else {
+                StdOut.println(team + " is not eliminated");
+            }
+        }
     }
 }
