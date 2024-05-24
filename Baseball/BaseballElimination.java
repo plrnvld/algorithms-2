@@ -72,7 +72,12 @@ class BaseballElimination {
         if (wins(team) + remaining(team) < currMaxWins) // Trivial elimination
             return true;
 
-        return false;
+        long allGamesRemaining = StreamSupport.stream(teams().spliterator(), false)
+            .map(t -> (long)remaining(t))
+            .reduce(0l, Long::sum);
+
+        long maxFlow = Math.round(ff.value());
+        return allGamesRemaining == maxFlow;
     }
 
     // subset R of teams that eliminates given team; null
