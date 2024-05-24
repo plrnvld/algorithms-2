@@ -7,13 +7,18 @@ class BaseballElimination {
     private int l[];
     private int r[];
     private int g[][];
-
+    private int currMaxWins;
 
     // create a baseball division from given filename in format specified below
     public BaseballElimination(String filename) {
         teamsTable = new ST<>();
 
         // ############### Read teams, add indexes
+
+        for (var team : teams()) {
+            int wins = wins(team);
+            currMaxWins = Math.max(wins, currMaxWins);
+        }
     }
 
     private int teamIndex(String team) {
@@ -45,7 +50,7 @@ class BaseballElimination {
 
     // number of remaining games for given team
     public int remaining(String team) {
-        return l[teamIndex(team)];
+        return r[teamIndex(team)];
     }
 
     // number of remaining games between team1 and team2
@@ -57,7 +62,8 @@ class BaseballElimination {
 
     // is given team eliminated?
     public boolean isEliminated(String team) {
-        int index = teamIndex(team);
+        if (wins(team) + remaining(team) < currMaxWins)
+            return true;
 
         return false;
     }
@@ -66,7 +72,7 @@ class BaseballElimination {
     // if not eliminated
     public Iterable<String> certificateOfElimination(String team) {
         int index = teamIndex(team);
-        
+
         return null;
     }
 
