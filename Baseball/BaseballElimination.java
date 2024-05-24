@@ -1,6 +1,7 @@
 import java.util.stream.StreamSupport;
 
 import edu.princeton.cs.algs4.FordFulkerson;
+import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.ST;
 import edu.princeton.cs.algs4.StdOut;
 
@@ -17,7 +18,7 @@ class BaseballElimination {
 
     // create a baseball division from given filename in format specified below
     public BaseballElimination(String filename) {
-        teamsTable = new ST<>();
+        readScenario(filename);
 
         // ############### Read teams, add indexes, create FlowNetwork, run
         // FordFulkerson
@@ -32,6 +33,21 @@ class BaseballElimination {
         allGamesRemaining = StreamSupport.stream(teams().spliterator(), false)
                 .map(t -> (long) remaining(t))
                 .reduce(0l, Long::sum);
+    }
+
+    private void readScenario(String filename) {
+        String[] lines = new In(filename).readAllLines();
+
+        for (var line : lines) {
+            String[] words = line.split("\\s+");
+            for (var word : words) {
+                System.out.println("*" + word + "*");
+            }
+
+            System.out.println();
+        }
+
+        teamsTable = new ST<>();
     }
 
     private int teamIndex(String team) {
