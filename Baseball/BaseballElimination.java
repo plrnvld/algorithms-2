@@ -16,6 +16,8 @@ class BaseballElimination {
     private int currMaxWins;
     private long allGamesRemaining;
     private FordFulkerson ff;
+    final int startVertex = -1;
+    final int endVertex = -1;
 
     // create a baseball division from given filename in format specified below
     public BaseballElimination(String filename) {
@@ -24,7 +26,7 @@ class BaseballElimination {
         // ############### Read teams, add indexes, create FlowNetwork, run
         // FordFulkerson
 
-        ff = new FordFulkerson(null, -1, -2);
+        ff = new FordFulkerson(null, startVertex, endVertex);
 
         for (var team : teams()) {
             int wins = wins(team);
@@ -55,13 +57,6 @@ class BaseballElimination {
         for (var line : teamLines) {
             String[] words = line.split("\\s+");
             addTeam(index, numTeams, words);
-
-            // ###################
-            for (var word : words) {
-                System.out.println("*" + word + "*");
-            }
-
-            System.out.println();
 
             index++;
         }
