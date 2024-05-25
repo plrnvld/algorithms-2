@@ -10,13 +10,13 @@ import edu.princeton.cs.algs4.StdOut;
 class BaseballElimination {
 
     private ST<String, Integer> teamsTable;
-    private int w[];
-    private int l[];
-    private int r[];
-    private int g[][];
+    private int[] w;
+    private int[] l;
+    private int[] r;
+    private FordFulkerson[] ffs;
+    private int[][] g;
     private int currMaxWins;
     private long allGamesRemaining;
-    private FordFulkerson ff;
     final int startVertex = -1;
     final int endVertex = -1;
 
@@ -26,8 +26,6 @@ class BaseballElimination {
 
         // ############### Read teams, add indexes, create FlowNetwork, run
         // FordFulkerson
-
-        ff = new FordFulkerson(buildFlowNetwork(), startVertex, endVertex);
 
         for (var team : teams()) {
             int wins = wins(team);
@@ -39,8 +37,17 @@ class BaseballElimination {
                 .reduce(0l, Long::sum);
     }
 
-    private FlowNetwork buildFlowNetwork()
-    {
+    private FordFulkerson getOrCreateFordFulkerson(String team) {
+        int index = teamIndex(team);
+        if (ffs[index] != null)
+            return ffs[index];
+
+        FordFulkerson ff = new FordFulkerson(buildFlowNetwork(index), startVertex, endVertex);
+        ffs[index] = ff;
+        return ff;
+    }
+
+    private FlowNetwork buildFlowNetwork(int teamIndex) {
         int numVertices = -1; // ############################
         FlowNetwork flowNetwork = new FlowNetwork(numVertices);
 
@@ -57,6 +64,8 @@ class BaseballElimination {
         r = new int[numTeams];
 
         g = new int[numTeams][numTeams];
+
+        ffs = new FordFulkerson[numTeams];
 
         String[] teamLines = Arrays.copyOfRange(lines, 1, lines.length);
 
@@ -124,6 +133,8 @@ class BaseballElimination {
 
     // is given team eliminated?
     public boolean isEliminated(String team) {
+        FordFulkerson ff = getOrCreateFordFulkerson(team);
+
         if (wins(team) + remaining(team) < currMaxWins) // Trivial elimination
             return true;
 
@@ -136,6 +147,8 @@ class BaseballElimination {
     public Iterable<String> certificateOfElimination(String team) {
         if (!isEliminated(team))
             return null;
+
+        FordFulkerson ff = getOrCreateFordFulkerson(team);
 
         return () -> StreamSupport.stream(teams().spliterator(), false)
                 .filter(t -> ff.inCut(teamIndex(t)))
