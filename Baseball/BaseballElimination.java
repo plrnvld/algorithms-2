@@ -1,6 +1,7 @@
 import java.util.Arrays;
 import java.util.stream.StreamSupport;
 
+import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FordFulkerson;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.ST;
@@ -26,7 +27,7 @@ class BaseballElimination {
         // ############### Read teams, add indexes, create FlowNetwork, run
         // FordFulkerson
 
-        ff = new FordFulkerson(null, startVertex, endVertex);
+        ff = new FordFulkerson(buildFlowNetwork(), startVertex, endVertex);
 
         for (var team : teams()) {
             int wins = wins(team);
@@ -36,6 +37,14 @@ class BaseballElimination {
         allGamesRemaining = StreamSupport.stream(teams().spliterator(), false)
                 .map(t -> (long) remaining(t))
                 .reduce(0l, Long::sum);
+    }
+
+    private FlowNetwork buildFlowNetwork()
+    {
+        int numVertices = -1; // ############################
+        FlowNetwork flowNetwork = new FlowNetwork(numVertices);
+
+        return flowNetwork;
     }
 
     private void readScenario(String filename) {
