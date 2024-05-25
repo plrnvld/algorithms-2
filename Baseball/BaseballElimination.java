@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.stream.StreamSupport;
 
 import edu.princeton.cs.algs4.FordFulkerson;
@@ -38,16 +39,27 @@ class BaseballElimination {
     private void readScenario(String filename) {
         String[] lines = new In(filename).readAllLines();
 
-        for (var line : lines) {
+        var numTeams = Integer.valueOf(lines[0]);
+        g = new int[numTeams][numTeams];
+
+        String[] teamLines = Arrays.copyOfRange(lines, 1, lines.length);
+
+        teamsTable = new ST<>();
+
+        int index = 0;
+        for (var line : teamLines) {
             String[] words = line.split("\\s+");
+            teamsTable.put(words[0], index);
+
+            // ###################
             for (var word : words) {
                 System.out.println("*" + word + "*");
             }
 
             System.out.println();
-        }
 
-        teamsTable = new ST<>();
+            index++;
+        }
     }
 
     private int teamIndex(String team) {
