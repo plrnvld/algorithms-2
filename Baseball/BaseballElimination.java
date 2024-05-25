@@ -37,9 +37,14 @@ class BaseballElimination {
     }
 
     private void readScenario(String filename) {
+
         String[] lines = new In(filename).readAllLines();
 
         var numTeams = Integer.valueOf(lines[0]);
+        w = new int[numTeams];
+        l = new int[numTeams];
+        r = new int[numTeams];
+
         g = new int[numTeams][numTeams];
 
         String[] teamLines = Arrays.copyOfRange(lines, 1, lines.length);
@@ -49,7 +54,7 @@ class BaseballElimination {
         int index = 0;
         for (var line : teamLines) {
             String[] words = line.split("\\s+");
-            teamsTable.put(words[0], index);
+            addTeam(index, numTeams, words);
 
             // ###################
             for (var word : words) {
@@ -59,6 +64,18 @@ class BaseballElimination {
             System.out.println();
 
             index++;
+        }
+    }
+
+    private void addTeam(int index, int numTeams, String[] words) {
+        teamsTable.put(words[0], index);
+        w[index] = Integer.valueOf(words[1]);
+        l[index] = Integer.valueOf(words[2]);
+        r[index] = Integer.valueOf(words[3]);
+
+        int skip = 4;
+        for (int i = 0; i < numTeams; i++) {
+            g[index][i] = Integer.valueOf(words[i + skip]);
         }
     }
 
