@@ -17,8 +17,17 @@ class BaseballElimination {
     private int[][] g;
     private int currMaxWins;
     private long allGamesRemaining;
-    final int startVertex = -1;
-    final int endVertex = -1;
+
+    private class MatchUp {
+        public int team1Index;
+        public int team2Index;
+
+        public MatchUp(int team1Index, int team2Index) {
+            this.team1Index = team1Index;
+            this.team2Index = team2Index;
+        }
+
+    }
 
     // create a baseball division from given filename in format specified below
     public BaseballElimination(String filename) {
@@ -42,13 +51,22 @@ class BaseballElimination {
         if (ffs[index] != null)
             return ffs[index];
 
-        FordFulkerson ff = new FordFulkerson(buildFlowNetwork(index), startVertex, endVertex);
+        FlowNetwork network = buildFlowNetwork(index);
+        int endVertex = network.V() - 1; // The last vertex is the endVertex
+        int startVertex = network.V() - 2; // The vertex before the last vertex is the start vertex
+
+        FordFulkerson ff = new FordFulkerson(network, startVertex, endVertex);
         ffs[index] = ff;
         return ff;
     }
 
     private FlowNetwork buildFlowNetwork(int teamIndex) {
-        int numVertices = -1; // ############################
+        MatchUp[] matchUps = createMatchupsForOtherTeams(teamIndex, numberOfTeams());
+
+        // ################################## Add team vertices first, then game
+        // vertices
+
+        int numVertices = 2 + numberOfTeams() - 1 + matchUps.length;
         FlowNetwork flowNetwork = new FlowNetwork(numVertices);
 
         return flowNetwork;
@@ -153,6 +171,25 @@ class BaseballElimination {
         return () -> StreamSupport.stream(teams().spliterator(), false)
                 .filter(t -> ff.inCut(teamIndex(t)))
                 .iterator();
+    }
+
+    private MatchUp[] createMatchupsForOtherTeams(int currTeamIndex, int numTeams) {
+        if (numTeams < 2)
+            return new MatchUp[0];
+
+        int count = 0;
+        MatchUp[] combinations = new MatchUp[((numTeams - 1) * numTeams) / 2 - (numTeams - 1)];
+
+        for (var i = 0; i < numTeams; i++) {
+            for (var j = i + 1; j < numTeams; j++) {
+                if (i != currTeamIndex && j != currTeamIndex) {
+                    combinations[count] = new MatchUp(i, j);
+                    count++;
+                }
+            }
+        }
+
+        return combinations;
     }
 
     public static void main(String[] args) {
