@@ -1,6 +1,7 @@
 import java.util.Arrays;
 import java.util.stream.StreamSupport;
 
+import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FordFulkerson;
 import edu.princeton.cs.algs4.In;
@@ -27,6 +28,9 @@ class BaseballElimination {
             this.team2Index = team2Index;
         }
 
+        public boolean involves(int teamIndex) {
+            return team1Index == teamIndex || team2Index == teamIndex;
+        }
     }
 
     // create a baseball division from given filename in format specified below
@@ -60,16 +64,49 @@ class BaseballElimination {
         return ff;
     }
 
-    private FlowNetwork buildFlowNetwork(int teamIndex) {
-        MatchUp[] matchUps = createMatchupsForOtherTeams(teamIndex, numberOfTeams());
-
-        // ################################## Add team vertices first, then game
-        // vertices
+    private FlowNetwork buildFlowNetwork(int forTeamIndex) {
+        MatchUp[] matchUps = createMatchupsForOtherTeams(forTeamIndex, numberOfTeams());
 
         int numVertices = 2 + numberOfTeams() - 1 + matchUps.length;
         FlowNetwork flowNetwork = new FlowNetwork(numVertices);
+        int endVertex = flowNetwork.V() - 1;
+        int startVertex = flowNetwork.V() - 2;
+
+        // Add team vertices
+        for (int curr = 0; curr < numberOfTeams(); curr++) {
+            if (curr != forTeamIndex) {
+                int currVertex = vertexIndex(curr, forTeamIndex);
+                double capacity = Math.max(w[forTeamIndex] + r[forTeamIndex] - w[curr], 0);
+                FlowEdge edge = new FlowEdge(currVertex, endVertex, capacity);
+                flowNetwork.addEdge(edge);
+            }
+        }
+
+        // Add matchup vertices
+        int index = numberOfTeams() - 1; // Indices already used by adding other teams
+        for (var matchUp : matchUps) {
+            FlowEdge toMatchupEdge = new FlowEdge(startVertex, index, g[matchUp.team1Index][matchUp.team2Index]);
+            flowNetwork.addEdge(toMatchupEdge);
+
+            FlowEdge toTeam1 = new FlowEdge(index, vertexIndex(matchUp.team1Index, forTeamIndex), Double.MAX_VALUE);
+            flowNetwork.addEdge(toTeam1);
+
+            FlowEdge toTeam2 = new FlowEdge(index, vertexIndex(matchUp.team2Index, forTeamIndex), Double.MAX_VALUE);
+            flowNetwork.addEdge(toTeam2);
+
+            index++;
+        }
 
         return flowNetwork;
+    }
+
+    private int vertexIndex(int teamNum, int forTeam) {
+        if (teamNum < forTeam)
+            return teamNum;
+        if (teamNum > forTeam)
+            return teamNum - 1;
+
+        throw new IllegalArgumentException("Not allowed");
     }
 
     private void readScenario(String filename) {
@@ -182,8 +219,9 @@ class BaseballElimination {
 
         for (var i = 0; i < numTeams; i++) {
             for (var j = i + 1; j < numTeams; j++) {
-                if (i != currTeamIndex && j != currTeamIndex) {
-                    combinations[count] = new MatchUp(i, j);
+                MatchUp matchUp = new MatchUp(i, j);
+                if (!matchUp.involves(currTeamIndex)) {
+                    combinations[count] = matchUp;
                     count++;
                 }
             }
