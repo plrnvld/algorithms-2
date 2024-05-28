@@ -37,9 +37,6 @@ public class BaseballElimination {
     public BaseballElimination(String filename) {
         readScenario(filename);
 
-        // ############### Read teams, add indexes, create FlowNetwork, run
-        // FordFulkerson
-
         for (var team : teams()) {
             int wins = wins(team);
             currMaxWins = Math.max(wins, currMaxWins);
@@ -128,7 +125,7 @@ public class BaseballElimination {
 
         int index = 0;
         for (var line : teamLines) {
-            String[] words = line.split("\\s+");
+            String[] words = line.trim().split("\\s+");
             addTeam(index, numTeams, words);
 
             index++;
