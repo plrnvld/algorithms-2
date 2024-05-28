@@ -8,7 +8,7 @@ import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.ST;
 import edu.princeton.cs.algs4.StdOut;
 
-class BaseballElimination {
+public class BaseballElimination {
 
     private ST<String, Integer> teamsTable;
     private int[] w;
