@@ -5,6 +5,7 @@ import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FordFulkerson;
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.LinkedQueue;
 import edu.princeton.cs.algs4.ST;
 import edu.princeton.cs.algs4.StdOut;
 
@@ -62,9 +63,9 @@ public class BaseballElimination {
     }
 
     private FlowNetwork buildFlowNetwork(int forTeamIndex) {
-        MatchUp[] matchUps = createMatchupsForOtherTeams(forTeamIndex, numberOfTeams());
+        LinkedQueue<MatchUp> matchUps = createMatchupsForOtherTeams(forTeamIndex, numberOfTeams());
 
-        int numVertices = 2 + numberOfTeams() - 1 + matchUps.length;
+        int numVertices = 2 + numberOfTeams() - 1 + matchUps.size();
         FlowNetwork flowNetwork = new FlowNetwork(numVertices);
         int endVertex = flowNetwork.V() - 1;
         int startVertex = flowNetwork.V() - 2;
@@ -82,13 +83,16 @@ public class BaseballElimination {
         // Add matchup vertices
         int index = numberOfTeams() - 1; // Indices already used by adding other teams
         for (var matchUp : matchUps) {
-            FlowEdge toMatchupEdge = new FlowEdge(startVertex, index, gamesAgainst[matchUp.team1Index][matchUp.team2Index]);
+            FlowEdge toMatchupEdge = new FlowEdge(startVertex, index,
+                    gamesAgainst[matchUp.team1Index][matchUp.team2Index]);
             flowNetwork.addEdge(toMatchupEdge);
 
-            FlowEdge toTeam1 = new FlowEdge(index, vertexIndex(matchUp.team1Index, forTeamIndex), Double.POSITIVE_INFINITY);
+            FlowEdge toTeam1 = new FlowEdge(index, vertexIndex(matchUp.team1Index, forTeamIndex),
+                    Double.POSITIVE_INFINITY);
             flowNetwork.addEdge(toTeam1);
 
-            FlowEdge toTeam2 = new FlowEdge(index, vertexIndex(matchUp.team2Index, forTeamIndex), Double.POSITIVE_INFINITY);
+            FlowEdge toTeam2 = new FlowEdge(index, vertexIndex(matchUp.team2Index, forTeamIndex),
+                    Double.POSITIVE_INFINITY);
             flowNetwork.addEdge(toTeam2);
 
             index++;
@@ -96,7 +100,7 @@ public class BaseballElimination {
 
         return flowNetwork;
     }
-
+    
     private int vertexIndex(int teamNum, int forTeam) {
         if (teamNum < forTeam)
             return teamNum;
@@ -110,7 +114,7 @@ public class BaseballElimination {
 
         String[] lines = new In(filename).readAllLines();
 
-        var numTeams = Integer.valueOf(lines[0]);
+        var numTeams = Integer.parseInt(lines[0]);
         winCount = new int[numTeams];
         lossCount = new int[numTeams];
         remaining = new int[numTeams];
@@ -185,11 +189,10 @@ public class BaseballElimination {
 
     // is given team eliminated?
     public boolean isEliminated(String team) {
-        FordFulkerson ff = getOrCreateFordFulkerson(team);
-
         if (wins(team) + remaining(team) < currMaxWins) // Trivial elimination
             return true;
 
+        FordFulkerson ff = getOrCreateFordFulkerson(team);
         long maxFlow = Math.round(ff.value());
         return allGamesRemaining == maxFlow;
     }
@@ -201,25 +204,22 @@ public class BaseballElimination {
             return null;
 
         FordFulkerson ff = getOrCreateFordFulkerson(team);
-
         return () -> StreamSupport.stream(teams().spliterator(), false)
                 .filter(t -> ff.inCut(teamIndex(t)))
                 .iterator();
     }
 
-    private MatchUp[] createMatchupsForOtherTeams(int currTeamIndex, int numTeams) {
-        if (numTeams < 2)
-            return new MatchUp[0];
+    private LinkedQueue<MatchUp> createMatchupsForOtherTeams(int currTeamIndex, int numTeams) {
+        LinkedQueue<MatchUp> combinations = new LinkedQueue<>();
 
-        int count = 0;
-        MatchUp[] combinations = new MatchUp[((numTeams - 1) * numTeams) / 2 - (numTeams - 1)];
+        if (numTeams < 2)
+            return combinations;
 
         for (var i = 0; i < numTeams; i++) {
             for (var j = i + 1; j < numTeams; j++) {
                 MatchUp matchUp = new MatchUp(i, j);
                 if (!matchUp.involves(currTeamIndex)) {
-                    combinations[count] = matchUp;
-                    count++;
+                    combinations.enqueue(matchUp);
                 }
             }
         }
