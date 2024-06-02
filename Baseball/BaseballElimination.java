@@ -11,8 +11,8 @@ import edu.princeton.cs.algs4.StdOut;
 public class BaseballElimination {
 
     private ST<String, Integer> teamsTable;
-    private int[] wins;
-    private int[] losses;
+    private int[] winCount;
+    private int[] lossCount;
     private int[] remaining;
     private FordFulkerson[] ffs;
     private int[][] gamesAgainst;
@@ -73,7 +73,7 @@ public class BaseballElimination {
         for (int curr = 0; curr < numberOfTeams(); curr++) {
             if (curr != forTeamIndex) {
                 int currVertex = vertexIndex(curr, forTeamIndex);
-                double capacity = Math.max(wins[forTeamIndex] + remaining[forTeamIndex] - wins[curr], 0);
+                double capacity = Math.max(winCount[forTeamIndex] + remaining[forTeamIndex] - winCount[curr], 0);
                 FlowEdge edge = new FlowEdge(currVertex, endVertex, capacity);
                 flowNetwork.addEdge(edge);
             }
@@ -111,8 +111,8 @@ public class BaseballElimination {
         String[] lines = new In(filename).readAllLines();
 
         var numTeams = Integer.valueOf(lines[0]);
-        wins = new int[numTeams];
-        losses = new int[numTeams];
+        winCount = new int[numTeams];
+        lossCount = new int[numTeams];
         remaining = new int[numTeams];
 
         gamesAgainst = new int[numTeams][numTeams];
@@ -126,20 +126,21 @@ public class BaseballElimination {
         int index = 0;
         for (var line : teamLines) {
             String[] words = line.trim().split("\\s+");
-            addTeam(index, numTeams, words);
+            addTeamToNetwork(index, numTeams, words);
 
             index++;
         }
     }
 
-    private void addTeam(int index, int numTeams, String[] words) {
-        teamsTable.put(words[0], index);
-        wins[index] = Integer.parseInt(words[1]);
-        losses[index] = Integer.parseInt(words[2]);
-        remaining[index] = Integer.parseInt(words[3]);
+    private void addTeamToNetwork(int teamIndex, int numTeams, String[] words) {
+        int pos = 0;
+        teamsTable.put(words[pos++], teamIndex);
+        winCount[teamIndex] = Integer.parseInt(words[pos++]);
+        lossCount[teamIndex] = Integer.parseInt(words[pos++]);
+        remaining[teamIndex] = Integer.parseInt(words[pos++]);
 
         for (int i = 0; i < numTeams; i++) {
-            gamesAgainst[index][i] = Integer.parseInt(words[i + 4]);
+            gamesAgainst[teamIndex][i] = Integer.parseInt(words[i + pos]);
         }
     }
 
@@ -162,12 +163,12 @@ public class BaseballElimination {
 
     // number of wins for given team
     public int wins(String team) {
-        return wins[teamIndex(team)];
+        return winCount[teamIndex(team)];
     }
 
     // number of losses for given team
     public int losses(String team) {
-        return losses[teamIndex(team)];
+        return lossCount[teamIndex(team)];
     }
 
     // number of remaining games for given team
