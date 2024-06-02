@@ -11,13 +11,13 @@ import edu.princeton.cs.algs4.StdOut;
 public class BaseballElimination {
 
     private ST<String, Integer> teamsTable;
-    private int[] w;
-    private int[] l;
-    private int[] r;
+    private int[] wins;
+    private int[] losses;
+    private int[] remaining;
     private FordFulkerson[] ffs;
-    private int[][] g;
+    private int[][] gamesAgainst;
     private int currMaxWins;
-    private long allGamesRemaining;
+    private final long allGamesRemaining;
 
     private class MatchUp {
         public int team1Index;
@@ -44,7 +44,7 @@ public class BaseballElimination {
 
         allGamesRemaining = StreamSupport.stream(teams().spliterator(), false)
                 .map(t -> (long) remaining(t))
-                .reduce(0l, Long::sum);
+                .reduce(0L, Long::sum);
     }
 
     private FordFulkerson getOrCreateFordFulkerson(String team) {
@@ -73,7 +73,7 @@ public class BaseballElimination {
         for (int curr = 0; curr < numberOfTeams(); curr++) {
             if (curr != forTeamIndex) {
                 int currVertex = vertexIndex(curr, forTeamIndex);
-                double capacity = Math.max(w[forTeamIndex] + r[forTeamIndex] - w[curr], 0);
+                double capacity = Math.max(wins[forTeamIndex] + remaining[forTeamIndex] - wins[curr], 0);
                 FlowEdge edge = new FlowEdge(currVertex, endVertex, capacity);
                 flowNetwork.addEdge(edge);
             }
@@ -82,13 +82,13 @@ public class BaseballElimination {
         // Add matchup vertices
         int index = numberOfTeams() - 1; // Indices already used by adding other teams
         for (var matchUp : matchUps) {
-            FlowEdge toMatchupEdge = new FlowEdge(startVertex, index, g[matchUp.team1Index][matchUp.team2Index]);
+            FlowEdge toMatchupEdge = new FlowEdge(startVertex, index, gamesAgainst[matchUp.team1Index][matchUp.team2Index]);
             flowNetwork.addEdge(toMatchupEdge);
 
-            FlowEdge toTeam1 = new FlowEdge(index, vertexIndex(matchUp.team1Index, forTeamIndex), Double.MAX_VALUE);
+            FlowEdge toTeam1 = new FlowEdge(index, vertexIndex(matchUp.team1Index, forTeamIndex), Double.POSITIVE_INFINITY);
             flowNetwork.addEdge(toTeam1);
 
-            FlowEdge toTeam2 = new FlowEdge(index, vertexIndex(matchUp.team2Index, forTeamIndex), Double.MAX_VALUE);
+            FlowEdge toTeam2 = new FlowEdge(index, vertexIndex(matchUp.team2Index, forTeamIndex), Double.POSITIVE_INFINITY);
             flowNetwork.addEdge(toTeam2);
 
             index++;
@@ -111,11 +111,11 @@ public class BaseballElimination {
         String[] lines = new In(filename).readAllLines();
 
         var numTeams = Integer.valueOf(lines[0]);
-        w = new int[numTeams];
-        l = new int[numTeams];
-        r = new int[numTeams];
+        wins = new int[numTeams];
+        losses = new int[numTeams];
+        remaining = new int[numTeams];
 
-        g = new int[numTeams][numTeams];
+        gamesAgainst = new int[numTeams][numTeams];
 
         ffs = new FordFulkerson[numTeams];
 
@@ -134,13 +134,12 @@ public class BaseballElimination {
 
     private void addTeam(int index, int numTeams, String[] words) {
         teamsTable.put(words[0], index);
-        w[index] = Integer.valueOf(words[1]);
-        l[index] = Integer.valueOf(words[2]);
-        r[index] = Integer.valueOf(words[3]);
+        wins[index] = Integer.parseInt(words[1]);
+        losses[index] = Integer.parseInt(words[2]);
+        remaining[index] = Integer.parseInt(words[3]);
 
-        int skip = 4;
         for (int i = 0; i < numTeams; i++) {
-            g[index][i] = Integer.valueOf(words[i + skip]);
+            gamesAgainst[index][i] = Integer.parseInt(words[i + 4]);
         }
     }
 
@@ -163,24 +162,24 @@ public class BaseballElimination {
 
     // number of wins for given team
     public int wins(String team) {
-        return w[teamIndex(team)];
+        return wins[teamIndex(team)];
     }
 
     // number of losses for given team
     public int losses(String team) {
-        return l[teamIndex(team)];
+        return losses[teamIndex(team)];
     }
 
     // number of remaining games for given team
     public int remaining(String team) {
-        return r[teamIndex(team)];
+        return remaining[teamIndex(team)];
     }
 
     // number of remaining games between team1 and team2
     public int against(String team1, String team2) {
         int index1 = teamIndex(team1);
         int index2 = teamIndex(team2);
-        return g[index1][index2];
+        return gamesAgainst[index1][index2];
     }
 
     // is given team eliminated?
