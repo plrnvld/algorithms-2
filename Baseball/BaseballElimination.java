@@ -210,10 +210,8 @@ public class BaseballElimination {
 
         FFWithStartEdges ffWithStartEdges = getOrCreateFordFulkerson(team);
 
-        int startVertex = ffWithStartEdges.flowNetwork.V() - 2;
         for (var flowEdge : ffWithStartEdges.startEdges) {
-            int otherVertex = flowEdge.other(startVertex);
-            if (flowEdge.residualCapacityTo(otherVertex) > 0.0001)
+            if (flowEdge.flow() != flowEdge.capacity())
                 return true;
         }
 
