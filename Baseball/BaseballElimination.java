@@ -36,12 +36,10 @@ public class BaseballElimination {
 
     private class FFWithStartEdges {
         public FordFulkerson ff;
-        public FlowNetwork flowNetwork;
         public Queue<FlowEdge> startEdges;
 
-        public FFWithStartEdges(FordFulkerson ff, FlowNetwork flowNetwork, Queue<FlowEdge> startEdges) {
+        public FFWithStartEdges(FordFulkerson ff, Queue<FlowEdge> startEdges) {
             this.ff = ff;
-            this.flowNetwork = flowNetwork;
             this.startEdges = startEdges;
         }
     }
@@ -73,7 +71,7 @@ public class BaseballElimination {
         }
 
         FordFulkerson ff = new FordFulkerson(network, startVertex, endVertex);
-        FFWithStartEdges ffWithStartEdges = new FFWithStartEdges(ff, network, startEdges);
+        FFWithStartEdges ffWithStartEdges = new FFWithStartEdges(ff, startEdges);
         ffs[index] = ffWithStartEdges;
         return ffWithStartEdges;
     }
