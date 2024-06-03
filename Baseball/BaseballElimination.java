@@ -6,6 +6,7 @@ import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FordFulkerson;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.LinkedQueue;
+import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.ST;
 import edu.princeton.cs.algs4.StdOut;
 
@@ -15,10 +16,9 @@ public class BaseballElimination {
     private int[] winCount;
     private int[] lossCount;
     private int[] remaining;
-    private FordFulkerson[] ffs;
+    private FFWithStartEdges[] ffs;
     private int[][] gamesAgainst;
     private int currMaxWins;
-    private final long allGamesRemaining;
 
     private class MatchUp {
         public int team1Index;
@@ -34,6 +34,18 @@ public class BaseballElimination {
         }
     }
 
+    private class FFWithStartEdges {
+        public FordFulkerson ff;
+        public FlowNetwork flowNetwork;
+        public Queue<FlowEdge> startEdges;
+
+        public FFWithStartEdges(FordFulkerson ff, FlowNetwork flowNetwork, Queue<FlowEdge> startEdges) {
+            this.ff = ff;
+            this.flowNetwork = flowNetwork;
+            this.startEdges = startEdges;
+        }
+    }
+
     // create a baseball division from given filename in format specified below
     public BaseballElimination(String filename) {
         readScenario(filename);
@@ -42,13 +54,9 @@ public class BaseballElimination {
             int wins = wins(team);
             currMaxWins = Math.max(wins, currMaxWins);
         }
-
-        allGamesRemaining = StreamSupport.stream(teams().spliterator(), false)
-                .map(t -> (long) remaining(t))
-                .reduce(0L, Long::sum);
     }
 
-    private FordFulkerson getOrCreateFordFulkerson(String team) {
+    private FFWithStartEdges getOrCreateFordFulkerson(String team) {
         int index = teamIndex(team);
         if (ffs[index] != null)
             return ffs[index];
@@ -57,9 +65,17 @@ public class BaseballElimination {
         int endVertex = network.V() - 1; // The last vertex is the endVertex
         int startVertex = network.V() - 2; // The vertex before the last vertex is the start vertex
 
+        Queue<FlowEdge> startEdges = new Queue<>();
+        for (var flowEdge : network.edges()) {
+            if (flowEdge.from() == startVertex || flowEdge.to() == startVertex) {
+                startEdges.enqueue(flowEdge);
+            }
+        }
+
         FordFulkerson ff = new FordFulkerson(network, startVertex, endVertex);
-        ffs[index] = ff;
-        return ff;
+        FFWithStartEdges ffWithStartEdges = new FFWithStartEdges(ff, network, startEdges);
+        ffs[index] = ffWithStartEdges;
+        return ffWithStartEdges;
     }
 
     private FlowNetwork buildFlowNetwork(int forTeamIndex) {
@@ -73,9 +89,9 @@ public class BaseballElimination {
         // Add team vertices
         for (int curr = 0; curr < numberOfTeams(); curr++) {
             if (curr != forTeamIndex) {
-                int currVertex = vertexIndex(curr, forTeamIndex);
-                double capacity = Math.max(winCount[forTeamIndex] + remaining[forTeamIndex] - winCount[curr], 0);
-                FlowEdge edge = new FlowEdge(currVertex, endVertex, capacity);
+                int teamIndexInNetwork = teamIndexInNetwork(curr, forTeamIndex);
+                int capacity = Math.max(winCount[forTeamIndex] + remaining[forTeamIndex] - winCount[curr], 0);
+                FlowEdge edge = new FlowEdge(teamIndexInNetwork, endVertex, capacity);
                 flowNetwork.addEdge(edge);
             }
         }
@@ -87,11 +103,11 @@ public class BaseballElimination {
                     gamesAgainst[matchUp.team1Index][matchUp.team2Index]);
             flowNetwork.addEdge(toMatchupEdge);
 
-            FlowEdge toTeam1 = new FlowEdge(index, vertexIndex(matchUp.team1Index, forTeamIndex),
+            FlowEdge toTeam1 = new FlowEdge(index, teamIndexInNetwork(matchUp.team1Index, forTeamIndex),
                     Double.POSITIVE_INFINITY);
             flowNetwork.addEdge(toTeam1);
 
-            FlowEdge toTeam2 = new FlowEdge(index, vertexIndex(matchUp.team2Index, forTeamIndex),
+            FlowEdge toTeam2 = new FlowEdge(index, teamIndexInNetwork(matchUp.team2Index, forTeamIndex),
                     Double.POSITIVE_INFINITY);
             flowNetwork.addEdge(toTeam2);
 
@@ -100,8 +116,8 @@ public class BaseballElimination {
 
         return flowNetwork;
     }
-    
-    private int vertexIndex(int teamNum, int forTeam) {
+
+    private int teamIndexInNetwork(int teamNum, int forTeam) {
         if (teamNum < forTeam)
             return teamNum;
         if (teamNum > forTeam)
@@ -121,7 +137,7 @@ public class BaseballElimination {
 
         gamesAgainst = new int[numTeams][numTeams];
 
-        ffs = new FordFulkerson[numTeams];
+        ffs = new FFWithStartEdges[numTeams];
 
         String[] teamLines = Arrays.copyOfRange(lines, 1, lines.length);
 
@@ -130,13 +146,13 @@ public class BaseballElimination {
         int index = 0;
         for (var line : teamLines) {
             String[] words = line.trim().split("\\s+");
-            addTeamToNetwork(index, numTeams, words);
+            addTeamInfo(index, numTeams, words);
 
             index++;
         }
     }
 
-    private void addTeamToNetwork(int teamIndex, int numTeams, String[] words) {
+    private void addTeamInfo(int teamIndex, int numTeams, String[] words) {
         int pos = 0;
         teamsTable.put(words[pos++], teamIndex);
         winCount[teamIndex] = Integer.parseInt(words[pos++]);
@@ -192,9 +208,16 @@ public class BaseballElimination {
         if (wins(team) + remaining(team) < currMaxWins) // Trivial elimination
             return true;
 
-        FordFulkerson ff = getOrCreateFordFulkerson(team);
-        long maxFlow = Math.round(ff.value());
-        return allGamesRemaining == maxFlow;
+        FFWithStartEdges ffWithStartEdges = getOrCreateFordFulkerson(team);
+
+        int startVertex = ffWithStartEdges.flowNetwork.V() - 2;
+        for (var flowEdge : ffWithStartEdges.startEdges) {
+            int otherVertex = flowEdge.other(startVertex);
+            if (flowEdge.residualCapacityTo(otherVertex) > 0.0001)
+                return true;
+        }
+
+        return false;
     }
 
     // subset R of teams that eliminates given team; null
@@ -203,9 +226,9 @@ public class BaseballElimination {
         if (!isEliminated(team))
             return null;
 
-        FordFulkerson ff = getOrCreateFordFulkerson(team);
+        FFWithStartEdges ffWithStartEdges = getOrCreateFordFulkerson(team);
         return () -> StreamSupport.stream(teams().spliterator(), false)
-                .filter(t -> ff.inCut(teamIndex(t)))
+                .filter(t -> ffWithStartEdges.ff.inCut(teamIndex(t)))
                 .iterator();
     }
 
