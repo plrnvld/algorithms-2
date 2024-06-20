@@ -1,10 +1,10 @@
 {
     "java.project.sourcePaths": [
         "SeamCarving",
-        "WordNet"
+        "WordNet",
+        "Baseball"
     ],
     "java.project.referencedLibraries": [
-        "lib/**/*.jar",
         "algs4.jar"
     ]
 }
