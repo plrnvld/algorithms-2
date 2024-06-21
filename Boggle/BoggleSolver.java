@@ -2,6 +2,7 @@ import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.TST;
+import java.util.stream.StreamSupport;
 
 public class BoggleSolver {
     TST<Integer> wordsInDictionary;
@@ -20,6 +21,11 @@ public class BoggleSolver {
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
+        return () -> StreamSupport.stream(getAllBoggleSequences(board).spliterator(), false)
+            .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
+    }
+
+    private Iterable<String> getAllBoggleSequences(BoggleBoard board) {
         return null;
     }
 
