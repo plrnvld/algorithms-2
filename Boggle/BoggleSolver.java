@@ -1,7 +1,11 @@
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.TST;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.stream.StreamSupport;
 
 public class BoggleSolver {
@@ -15,18 +19,28 @@ public class BoggleSolver {
         wordsInDictionary = new TST<>();
 
         for (String word : dictionary) {
-            wordsInDictionary.put(word, unsafeScoreOf(word));
+            wordsInDictionary.put(word, wordValue(word));
         }
     }
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
         return () -> StreamSupport.stream(getAllBoggleSequences(board).spliterator(), false)
-            .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
+                .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
     }
 
     private Iterable<String> getAllBoggleSequences(BoggleBoard board) {
-        return null;
+        Queue<Integer> queue = new Queue<>();
+
+        int boardSize = board.cols() * board.rows();
+        for (var i = 0; i < boardSize; i++)
+            queue.enqueue(i);
+
+        LinkedList<String> sequences = new LinkedList<>();
+
+        // ############## Calculate possibilities
+
+        return sequences;
     }
 
     // Returns the score of the given word if it is in the dictionary, zero
@@ -41,8 +55,69 @@ public class BoggleSolver {
         return scoreValue;
     }
 
+    private Iterable<Integer> getNextNums(int num, Iterable<Integer> path, BoggleBoard board) {
+        ArrayList<Integer> sequences = new ArrayList<>(8);
+
+        int boardRows = board.rows();
+        int boardCols = board.cols();
+        int row = numToRow(num, boardCols);
+        int col = numToCol(num, boardCols);
+
+        boolean rowLargerThanZero = row > 0;
+        boolean colLargerThanZero = col > 0;
+        boolean rowSmallerThanMax = row < boardRows;
+        boolean colSmallerThanMax = col < boardCols;
+
+        if (rowLargerThanZero) {
+            addWhenOpen(col, row - 1, sequences, path, boardCols);
+
+            if (colLargerThanZero)
+                addWhenOpen(col - 1, row - 1, sequences, path, boardCols);
+
+            if (colSmallerThanMax)
+                addWhenOpen(col + 1, row - 1, sequences, path, boardCols);
+        }
+
+        if (rowSmallerThanMax) {
+            addWhenOpen(col, row + 1, sequences, path, boardCols);
+
+            if (colLargerThanZero)
+                addWhenOpen(col - 1, row + 1, sequences, path, boardCols);
+
+            if (colSmallerThanMax)
+                addWhenOpen(col + 1, row + 1, sequences, path, boardCols);
+        }
+
+        if (colLargerThanZero)
+            addWhenOpen(col - 1, row, sequences, path, boardCols);
+
+        if (colSmallerThanMax)
+            addWhenOpen(col + 1, row, sequences, path, boardCols);
+
+        return sequences;
+    }
+
+    private void addWhenOpen(int col, int row, ArrayList<Integer> numList, Iterable<Integer> path, int boardCols) {
+        var nextNum = rowColToNum(col - 1, row - 1, boardCols);
+
+        if (!StreamSupport.stream(path.spliterator(), false).anyMatch(pathNum -> pathNum.intValue() == nextNum))
+            numList.add(nextNum);
+    }
+
+    private static int numToRow(int num, int width) {
+        return num / width;
+    }
+
+    private static int numToCol(int num, int width) {
+        return num % width;
+    }
+
+    private static int rowColToNum(int col, int row, int width) {
+        return row * width + col;
+    }
+
     // Give the score for a word, but don't check if it's in the dictionary
-    private int unsafeScoreOf(String word) {
+    private int wordValue(String word) {
         int numChars = word.length();
         switch (numChars) {
             case 0:
