@@ -1,10 +1,10 @@
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
-import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.TST;
 
 import java.util.ArrayList;
+import java.util.stream.IntStream;
 import java.util.LinkedList;
 import java.util.stream.StreamSupport;
 
@@ -18,9 +18,11 @@ public class BoggleSolver {
     public BoggleSolver(String[] dictionary) {
         wordsInDictionary = new TST<>();
 
+        System.out.println("Preparing dictionary");
         for (String word : dictionary) {
             wordsInDictionary.put(word, wordValue(word));
         }
+        System.out.println("Dictionary created");
     }
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
@@ -30,15 +32,45 @@ public class BoggleSolver {
     }
 
     private Iterable<String> getAllBoggleSequences(BoggleBoard board) {
-        Queue<Integer> queue = new Queue<>();
+        System.out.println("Start generating sequences");
+
+        Queue<int[]> paths = new Queue<>();
 
         int boardSize = board.cols() * board.rows();
-        for (var i = 0; i < boardSize; i++)
-            queue.enqueue(i);
+        for (var i = 0; i < boardSize; i++) {
+            int[] newPath = { i };
+            paths.enqueue(newPath);
+        }
+
+        System.out.println("Working on paths");
+        while (!paths.isEmpty()) {
+            int[] currPath = paths.dequeue();
+            int lastNum = currPath[currPath.length - 1];
+
+            for (Integer nextNum : getNextNums(lastNum, currPath, board)) {
+                int[] newPath = new int[currPath.length + 1];
+                int i = 0;
+                for (; i < currPath.length; i++)
+                    newPath[i] = currPath[i];
+
+                newPath[i] = nextNum.intValue();
+
+                paths.enqueue(newPath);
+            }
+        }
+
+        System.out.println("Paths finished");
 
         LinkedList<String> sequences = new LinkedList<>();
 
-        // ############## Calculate possibilities
+        while (!paths.isEmpty()) {
+            int[] currPath = paths.dequeue();
+            if (currPath.length >= 3) {
+                sequences.add(getWordFromPath(board, currPath));
+            }
+        }
+
+        System.out.println("Generating sequences finished");
 
         return sequences;
     }
@@ -55,8 +87,10 @@ public class BoggleSolver {
         return scoreValue;
     }
 
-    private Iterable<Integer> getNextNums(int num, Iterable<Integer> path, BoggleBoard board) {
+    private Iterable<Integer> getNextNums(int num, int[] path, BoggleBoard board) {
         ArrayList<Integer> sequences = new ArrayList<>(8);
+        if (path.length >= 16)
+            return new ArrayList<>();
 
         int boardRows = board.rows();
         int boardCols = board.cols();
@@ -97,10 +131,10 @@ public class BoggleSolver {
         return sequences;
     }
 
-    private void addWhenOpen(int col, int row, ArrayList<Integer> numList, Iterable<Integer> path, int boardCols) {
+    private void addWhenOpen(int col, int row, ArrayList<Integer> numList, int[] path, int boardCols) {
         var nextNum = rowColToNum(col - 1, row - 1, boardCols);
 
-        if (!StreamSupport.stream(path.spliterator(), false).anyMatch(pathNum -> pathNum.intValue() == nextNum))
+        if (!IntStream.of(path).anyMatch(x -> x == nextNum))
             numList.add(nextNum);
     }
 
@@ -114,6 +148,24 @@ public class BoggleSolver {
 
     private static int rowColToNum(int col, int row, int width) {
         return row * width + col;
+    }
+
+    private static String getWordFromPath(BoggleBoard board, int[] path) {
+        StringBuilder builder = new StringBuilder();
+        int width = board.cols();
+
+        for (var num : path) {
+            int row = numToRow(num, width);
+            int col = numToCol(num, width);
+            char letter = board.getLetter(row, col);
+
+            if (letter == 'Q')
+                builder.append("QU");
+            else
+                builder.append(letter);
+        }
+
+        return builder.toString();
     }
 
     // Give the score for a word, but don't check if it's in the dictionary

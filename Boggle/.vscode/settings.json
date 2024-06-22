@@ -1,0 +1,9 @@
+{
+    "java.project.sourcePaths": [
+        ".",
+        "testfiles"
+    ],
+    "java.project.referencedLibraries": [
+        "c:\\source\\algorithms2\\week1\\algs4.jar"
+    ]
+}
