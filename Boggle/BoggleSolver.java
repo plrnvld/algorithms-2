@@ -4,6 +4,7 @@ import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.TST;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.stream.IntStream;
 import java.util.LinkedList;
 import java.util.stream.StreamSupport;
@@ -22,7 +23,7 @@ public class BoggleSolver {
         for (String word : dictionary) {
             wordsInDictionary.put(word, wordValue(word));
         }
-        System.out.println("Dictionary created");
+        System.out.println("Dictionary created, contains " + wordsInDictionary.size() + " words.");
     }
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
@@ -43,7 +44,10 @@ public class BoggleSolver {
         }
 
         System.out.println("Working on paths");
-        while (!paths.isEmpty()) {
+
+        int pathsAdded = 0;
+
+        while (!paths.isEmpty() && pathsAdded < 1000) {
             int[] currPath = paths.dequeue();
             int lastNum = currPath[currPath.length - 1];
 
@@ -55,22 +59,27 @@ public class BoggleSolver {
 
                 newPath[i] = nextNum.intValue();
 
+                String pathText = Arrays.toString(newPath);
+                // System.out.println(" Enq: [" + pathText + "]");
+
                 paths.enqueue(newPath);
+                pathsAdded++;
             }
         }
-
-        System.out.println("Paths finished");
 
         LinkedList<String> sequences = new LinkedList<>();
 
         while (!paths.isEmpty()) {
             int[] currPath = paths.dequeue();
+            String pathText = Arrays.toString(currPath);
+            // System.out.println(" Deq: [" + pathText + "]");
+
             if (currPath.length >= 3) {
                 sequences.add(getWordFromPath(board, currPath));
             }
         }
 
-        System.out.println("Generating sequences finished");
+        System.out.println("Generating sequences finished, " + sequences.size() + " sequences added.");
 
         return sequences;
     }
@@ -132,7 +141,7 @@ public class BoggleSolver {
     }
 
     private void addWhenOpen(int col, int row, ArrayList<Integer> numList, int[] path, int boardCols) {
-        var nextNum = rowColToNum(col - 1, row - 1, boardCols);
+        var nextNum = rowColToNum(col, row, boardCols);
 
         if (!IntStream.of(path).anyMatch(x -> x == nextNum))
             numList.add(nextNum);
@@ -157,6 +166,9 @@ public class BoggleSolver {
         for (var num : path) {
             int row = numToRow(num, width);
             int col = numToCol(num, width);
+
+            System.out.println(" > path ] " + Arrays.toString(path));
+            System.out.println("   > Getting col=" + col + ", row=" + row + " for num=" + num);
             char letter = board.getLetter(row, col);
 
             if (letter == 'Q')
