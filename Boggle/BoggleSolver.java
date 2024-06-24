@@ -30,6 +30,8 @@ public class BoggleSolver {
     public Iterable<String> getAllValidWords(BoggleBoard board) {
         return () -> StreamSupport.stream(getAllBoggleSequences(board).spliterator(), false)
                 .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
+
+        // ################### This should check that valid words are returned only once
     }
 
     private Iterable<String> getAllBoggleSequences(BoggleBoard board) {
@@ -59,7 +61,7 @@ public class BoggleSolver {
 
                 newPath[i] = nextNum.intValue();
 
-                String pathText = Arrays.toString(newPath);
+                // String pathText = Arrays.toString(newPath);
                 // System.out.println(" Enq: [" + pathText + "]");
 
                 paths.enqueue(newPath);
@@ -71,7 +73,7 @@ public class BoggleSolver {
 
         while (!paths.isEmpty()) {
             int[] currPath = paths.dequeue();
-            String pathText = Arrays.toString(currPath);
+            // String pathText = Arrays.toString(currPath);
             // System.out.println(" Deq: [" + pathText + "]");
 
             if (currPath.length >= 3) {
@@ -111,22 +113,22 @@ public class BoggleSolver {
         boolean rowSmallerThanMax = row < boardRows - 1;
         boolean colSmallerThanMax = col < boardCols - 1;
 
-        if (rowLargerThanZero) {
-            addWhenOpen(col, row - 1, sequences, path, boardCols);
-
+        if (rowLargerThanZero) {          
             if (colLargerThanZero)
                 addWhenOpen(col - 1, row - 1, sequences, path, boardCols);
+
+            addWhenOpen(col, row - 1, sequences, path, boardCols);
 
             if (colSmallerThanMax)
                 addWhenOpen(col + 1, row - 1, sequences, path, boardCols);
         }
 
         if (rowSmallerThanMax) {
-            addWhenOpen(col, row + 1, sequences, path, boardCols);
-
             if (colLargerThanZero)
                 addWhenOpen(col - 1, row + 1, sequences, path, boardCols);
 
+            addWhenOpen(col, row + 1, sequences, path, boardCols);
+            
             if (colSmallerThanMax)
                 addWhenOpen(col + 1, row + 1, sequences, path, boardCols);
         }
@@ -140,11 +142,11 @@ public class BoggleSolver {
         return sequences;
     }
 
-    private void addWhenOpen(int col, int row, ArrayList<Integer> numList, int[] path, int boardCols) {
-        var nextNum = rowColToNum(col, row, boardCols);
+    private static void addWhenOpen(int col, int row, ArrayList<Integer> sequences, int[] path, int boardCols) {
+        var nextNum = colRowToNum(col, row, boardCols);
 
         if (!IntStream.of(path).anyMatch(x -> x == nextNum))
-            numList.add(nextNum);
+            sequences.add(nextNum);
     }
 
     private static int numToRow(int num, int width) {
@@ -155,7 +157,7 @@ public class BoggleSolver {
         return num % width;
     }
 
-    private static int rowColToNum(int col, int row, int width) {
+    private static int colRowToNum(int col, int row, int width) {
         return row * width + col;
     }
 
@@ -167,12 +169,12 @@ public class BoggleSolver {
             int row = numToRow(num, width);
             int col = numToCol(num, width);
 
-            System.out.println(" > path ] " + Arrays.toString(path));
-            System.out.println("   > Getting col=" + col + ", row=" + row + " for num=" + num);
-            if (col == 4 || row == 4) {
-                System.out.println("ABORT: row=" + row + " col=" + col);
-                System.out.println("Path: " + Arrays.toString(path));
-            }
+            // System.out.println(" > path " + Arrays.toString(path));
+            // System.out.println("   > Getting col=" + col + ", row=" + row + " for num=" + num);
+            // if (col == 4 || row == 4) {
+            //     System.out.println("ABORT: row=" + row + " col=" + col);
+            //     System.out.println("Path: " + Arrays.toString(path));
+            // }
 
             char letter = board.getLetter(row, col);
 
