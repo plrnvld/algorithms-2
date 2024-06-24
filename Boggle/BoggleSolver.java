@@ -108,8 +108,8 @@ public class BoggleSolver {
 
         boolean rowLargerThanZero = row > 0;
         boolean colLargerThanZero = col > 0;
-        boolean rowSmallerThanMax = row < boardRows;
-        boolean colSmallerThanMax = col < boardCols;
+        boolean rowSmallerThanMax = row < boardRows - 1;
+        boolean colSmallerThanMax = col < boardCols - 1;
 
         if (rowLargerThanZero) {
             addWhenOpen(col, row - 1, sequences, path, boardCols);
@@ -169,6 +169,11 @@ public class BoggleSolver {
 
             System.out.println(" > path ] " + Arrays.toString(path));
             System.out.println("   > Getting col=" + col + ", row=" + row + " for num=" + num);
+            if (col == 4 || row == 4) {
+                System.out.println("ABORT: row=" + row + " col=" + col);
+                System.out.println("Path: " + Arrays.toString(path));
+            }
+
             char letter = board.getLetter(row, col);
 
             if (letter == 'Q')
