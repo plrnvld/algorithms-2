@@ -5,9 +5,11 @@ import edu.princeton.cs.algs4.TST;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.stream.IntStream;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.StreamSupport;
 
 public class BoggleSolver {
@@ -34,24 +36,25 @@ public class BoggleSolver {
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
         Instant sequenceSearchStart = Instant.now();
-        
+
         Iterable<String> sequences = () -> StreamSupport
                 .stream(getBoggleCharacterSequences(board).spliterator(), false).iterator();
 
-        // Get all values from iterable so dedup phase does not need lazy loading, and can be measured better
+        // Get all values from iterable so dedup phase does not need lazy loading, and
+        // can be measured better
         List<String> sequenceList = new ArrayList<>();
         sequences.forEach(sequenceList::add);
 
         Instant sequenceSearchEnd = Instant.now();
         printDuration("sequence search", sequenceSearchStart, sequenceSearchEnd);
 
-
         Instant validWordsStart = Instant.now();
 
         Iterable<String> validWords = () -> StreamSupport.stream(sequenceList.spliterator(), false)
-            .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
+                .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
 
-        // Get all values from iterable so dedup phase does not need lazy loading, and can be measured better
+        // Get all values from iterable so dedup phase does not need lazy loading, and
+        // can be measured better
         List<String> wordList = new ArrayList<>();
         validWords.forEach(wordList::add);
 
@@ -76,36 +79,28 @@ public class BoggleSolver {
     }
 
     private Iterable<String> getBoggleCharacterSequences(BoggleBoard board) {
-        Queue<int[]> possiblePaths = new Queue<>();
-        Queue<int[]> paths = new Queue<>();
+        Queue<PathPart> possiblePaths = new Queue<>();
+        Queue<PathPart> paths = new Queue<>();
 
         Instant startPossiblePaths = Instant.now();
 
         int boardSize = board.cols() * board.rows();
         for (var i = 0; i < boardSize; i++) {
-            int[] newPath = { i };
-            possiblePaths.enqueue(newPath);
+            possiblePaths.enqueue(new PathPart(i));
         }
 
         LinkedList<String> charSequences = new LinkedList<>();
 
         while (!possiblePaths.isEmpty()) {
-            int[] currPath = possiblePaths.dequeue();
-            int lastNum = currPath[currPath.length - 1];
+            PathPart currPathPart = possiblePaths.dequeue();
+            int lastNum = currPathPart.num;
 
-            if (currPath.length >= 3) {
-                paths.enqueue(currPath);
+            if (currPathPart.length >= 3) {
+                paths.enqueue(currPathPart);
             }
 
-            for (int nextNum : getNextNums(lastNum, currPath, board)) {
-                int[] newPath = new int[currPath.length + 1];
-                int i = 0;
-                for (; i < currPath.length; i++)
-                    newPath[i] = currPath[i];
-
-                newPath[i] = nextNum;
-
-                possiblePaths.enqueue(newPath);
+            for (var nextPathPart : getNextPathParts(lastNum, currPathPart, board)) {
+                possiblePaths.enqueue(nextPathPart);
             }
         }
 
@@ -139,9 +134,9 @@ public class BoggleSolver {
         return scoreValue;
     }
 
-    private Iterable<Integer> getNextNums(int num, int[] path, BoggleBoard board) {
-        ArrayList<Integer> nextNums = new ArrayList<>(8);
-        if (path.length >= 16) {
+    private Iterable<PathPart> getNextPathParts(int num, PathPart pathPart, BoggleBoard board) {
+        ArrayList<PathPart> nextPathParts = new ArrayList<>(8);
+        if (pathPart.length >= 16) {
             return new ArrayList<>();
         }
 
@@ -157,38 +152,38 @@ public class BoggleSolver {
 
         if (rowLargerThanZero) {
             if (colLargerThanZero)
-                addWhenOpen(col - 1, row - 1, nextNums, path, boardCols);
+                addWhenOpen(col - 1, row - 1, nextPathParts, pathPart, boardCols);
 
-            addWhenOpen(col, row - 1, nextNums, path, boardCols);
+            addWhenOpen(col, row - 1, nextPathParts, pathPart, boardCols);
 
             if (colSmallerThanMax)
-                addWhenOpen(col + 1, row - 1, nextNums, path, boardCols);
+                addWhenOpen(col + 1, row - 1, nextPathParts, pathPart, boardCols);
         }
 
         if (rowSmallerThanMax) {
             if (colLargerThanZero)
-                addWhenOpen(col - 1, row + 1, nextNums, path, boardCols);
+                addWhenOpen(col - 1, row + 1, nextPathParts, pathPart, boardCols);
 
-            addWhenOpen(col, row + 1, nextNums, path, boardCols);
+            addWhenOpen(col, row + 1, nextPathParts, pathPart, boardCols);
 
             if (colSmallerThanMax)
-                addWhenOpen(col + 1, row + 1, nextNums, path, boardCols);
+                addWhenOpen(col + 1, row + 1, nextPathParts, pathPart, boardCols);
         }
 
         if (colLargerThanZero)
-            addWhenOpen(col - 1, row, nextNums, path, boardCols);
+            addWhenOpen(col - 1, row, nextPathParts, pathPart, boardCols);
 
         if (colSmallerThanMax)
-            addWhenOpen(col + 1, row, nextNums, path, boardCols);
+            addWhenOpen(col + 1, row, nextPathParts, pathPart, boardCols);
 
-        return nextNums;
+        return nextPathParts;
     }
 
-    private static void addWhenOpen(int col, int row, ArrayList<Integer> nextNums, int[] path, int boardCols) {
+    private void addWhenOpen(int col, int row, ArrayList<PathPart> nexPathParts, PathPart pathPart, int boardCols) {
         var nextNum = colRowToNum(col, row, boardCols);
 
-        if (!IntStream.of(path).anyMatch(x -> x == nextNum))
-            nextNums.add(nextNum);
+        if (!pathPart.containsNum(nextNum))
+            nexPathParts.add(new PathPart(pathPart, nextNum));
     }
 
     private static int numToRow(int num, int width) {
@@ -203,11 +198,11 @@ public class BoggleSolver {
         return row * width + col;
     }
 
-    private static String getWordFromPath(BoggleBoard board, int[] path) {
+    private static String getWordFromPath(BoggleBoard board, PathPart pathPart) {
         StringBuilder builder = new StringBuilder();
         int width = board.cols();
 
-        for (var num : path) {
+        for (var num : pathPart.nums()) {
             int row = numToRow(num, width);
             int col = numToCol(num, width);
 
@@ -244,6 +239,41 @@ public class BoggleSolver {
         }
     }
 
+    private class PathPart {
+        int num;
+        int length;
+        PathPart prev;
+
+        public PathPart(int start) {
+            num = start;
+            length = 1;
+        }
+
+        public PathPart(PathPart prev, int num) {
+            this.prev = prev;
+            this.num = num;
+            length = prev.length + 1;
+        }
+
+        public boolean containsNum(int n) {
+            return num == n || (prev != null && prev.containsNum(n));
+        }
+
+        public Iterable<Integer> nums() {
+            Stack<Integer> stack = new Stack<>();
+            
+            PathPart curr = this;
+            stack.push(curr.num);
+
+            while (curr.prev != null) {
+                curr = curr.prev;
+                stack.push(curr.num);
+            }
+
+            return stack;
+        }
+    }
+
     // Example:
     // java BoggleSolver ./testfiles/dictionary-algs4.txt ./testfiles/board4x4.txt
     public static void main(String[] args) {
@@ -272,8 +302,8 @@ public class BoggleSolver {
         long diff = finish.toEpochMilli() - start.toEpochMilli();
         double seconds = ((double) diff / 1000.0);
         String prefix = indent == 0
-            ? ""
-            : " " + "> ".repeat(indent);
+                ? ""
+                : " " + "> ".repeat(indent);
         System.out.println(prefix + "Step [" + step + "]: duration was " + seconds + " s.");
     }
 }
