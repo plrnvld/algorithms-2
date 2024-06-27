@@ -3,9 +3,11 @@ import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.TST;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.stream.IntStream;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.StreamSupport;
 
 public class BoggleSolver {
@@ -18,28 +20,66 @@ public class BoggleSolver {
     public BoggleSolver(String[] dictionary) {
         wordsInDictionary = new TST<>();
 
+        Instant dictStart = Instant.now();
+
         for (String word : dictionary) {
             wordsInDictionary.put(word, wordValue(word));
         }
+
+        Instant dictEnd = Instant.now();
+
+        printDuration("loading dictionary", dictStart, dictEnd);
     }
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
-        Iterable<String> validWords = () -> StreamSupport
-                .stream(getBoggleCharacterSequences(board).spliterator(), false)
-                .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
+        Instant sequenceSearchStart = Instant.now();
+        
+        Iterable<String> sequences = () -> StreamSupport
+                .stream(getBoggleCharacterSequences(board).spliterator(), false).iterator();
 
+        // Get all values from iterable so dedup phase does not need lazy loading, and can be measured better
+        List<String> sequenceList = new ArrayList<>();
+        sequences.forEach(sequenceList::add);
+
+        Instant sequenceSearchEnd = Instant.now();
+        printDuration("sequence search", sequenceSearchStart, sequenceSearchEnd);
+
+
+        Instant validWordsStart = Instant.now();
+
+        Iterable<String> validWords = () -> StreamSupport.stream(sequenceList.spliterator(), false)
+            .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
+
+        // Get all values from iterable so dedup phase does not need lazy loading, and can be measured better
+        List<String> wordList = new ArrayList<>();
+        validWords.forEach(wordList::add);
+
+        Instant validWordsEnd = Instant.now();
+
+        printDuration("validate words", validWordsStart, validWordsEnd);
+
+        Instant dedupStart = Instant.now();
         TST<Integer> dedupSearchTree = new TST<>();
 
-        for (var word : validWords) {
+        for (var word : wordList) {
             dedupSearchTree.put(word, 1);
         }
 
-        return dedupSearchTree.keys();
+        var keys = dedupSearchTree.keys();
+
+        Instant dedupEnd = Instant.now();
+
+        printDuration("dedup", dedupStart, dedupEnd);
+
+        return keys;
     }
 
     private Iterable<String> getBoggleCharacterSequences(BoggleBoard board) {
         Queue<int[]> possiblePaths = new Queue<>();
+        Queue<int[]> paths = new Queue<>();
+
+        Instant startPossiblePaths = Instant.now();
 
         int boardSize = board.cols() * board.rows();
         for (var i = 0; i < boardSize; i++) {
@@ -54,7 +94,7 @@ public class BoggleSolver {
             int lastNum = currPath[currPath.length - 1];
 
             if (currPath.length >= 3) {
-                charSequences.add(getWordFromPath(board, currPath));
+                paths.enqueue(currPath);
             }
 
             for (int nextNum : getNextNums(lastNum, currPath, board)) {
@@ -68,6 +108,21 @@ public class BoggleSolver {
                 possiblePaths.enqueue(newPath);
             }
         }
+
+        Instant endPossiblePaths = Instant.now();
+
+        printDuration("find possible paths", startPossiblePaths, endPossiblePaths, 1);
+
+        Instant convertPathsToWordsStart = Instant.now();
+
+        while (!paths.isEmpty()) {
+            var nextPath = paths.dequeue();
+            charSequences.add(getWordFromPath(board, nextPath));
+        }
+
+        Instant convertPathsToWordsEnd = Instant.now();
+
+        printDuration("word conversions", convertPathsToWordsStart, convertPathsToWordsEnd, 1);
 
         return charSequences;
     }
@@ -156,14 +211,6 @@ public class BoggleSolver {
             int row = numToRow(num, width);
             int col = numToCol(num, width);
 
-            // System.out.println(" > path " + Arrays.toString(path));
-            // System.out.println(" > Getting col=" + col + ", row=" + row + " for num=" +
-            // num);
-            // if (col == 4 || row == 4) {
-            // System.out.println("ABORT: row=" + row + " col=" + col);
-            // System.out.println("Path: " + Arrays.toString(path));
-            // }
-
             char letter = board.getLetter(row, col);
 
             if (letter == 'Q')
@@ -197,9 +244,11 @@ public class BoggleSolver {
         }
     }
 
-    // Example: java BoggleSolver ./testfiles/dictionary-algs4.txt
-    // ./testfiles/board4x4.txt
+    // Example:
+    // java BoggleSolver ./testfiles/dictionary-algs4.txt ./testfiles/board4x4.txt
     public static void main(String[] args) {
+        Instant start = Instant.now();
+
         In in = new In(args[0]);
         String[] dictionary = in.readAllStrings();
         BoggleSolver solver = new BoggleSolver(dictionary);
@@ -210,5 +259,21 @@ public class BoggleSolver {
             score += solver.scoreOf(word);
         }
         StdOut.println("Score = " + score);
+        Instant finish = Instant.now();
+
+        printDuration("full run", start, finish);
+    }
+
+    private static void printDuration(String step, Instant start, Instant finish) {
+        printDuration(step, start, finish, 0);
+    }
+
+    private static void printDuration(String step, Instant start, Instant finish, int indent) {
+        long diff = finish.toEpochMilli() - start.toEpochMilli();
+        double seconds = ((double) diff / 1000.0);
+        String prefix = indent == 0
+            ? ""
+            : " " + "> ".repeat(indent);
+        System.out.println(prefix + "Step [" + step + "]: duration was " + seconds + " s.");
     }
 }
