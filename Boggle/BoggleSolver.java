@@ -9,7 +9,7 @@ import java.util.LinkedList;
 import java.util.stream.StreamSupport;
 
 public class BoggleSolver {
-    TST<Integer> wordsInDictionary;
+    private final TST<Integer> wordsInDictionary;
 
     // Initializes the data structure using the given array of strings as the
     // dictionary.
@@ -57,13 +57,13 @@ public class BoggleSolver {
                 charSequences.add(getWordFromPath(board, currPath));
             }
 
-            for (Integer nextNum : getNextNums(lastNum, currPath, board)) {
+            for (int nextNum : getNextNums(lastNum, currPath, board)) {
                 int[] newPath = new int[currPath.length + 1];
                 int i = 0;
                 for (; i < currPath.length; i++)
                     newPath[i] = currPath[i];
 
-                newPath[i] = nextNum.intValue();
+                newPath[i] = nextNum;
 
                 possiblePaths.enqueue(newPath);
             }
@@ -86,8 +86,7 @@ public class BoggleSolver {
 
     private Iterable<Integer> getNextNums(int num, int[] path, BoggleBoard board) {
         ArrayList<Integer> nextNums = new ArrayList<>(8);
-        if (path.length > 16) {
-            System.out.println(">>> It happened, path bigger than 16");
+        if (path.length >= 16) {
             return new ArrayList<>();
         }
 
