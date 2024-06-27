@@ -8,7 +8,7 @@ import java.util.Date;
 
 public class BoggleSolver {
     private final TST<Integer> wordsInDictionary;
-    
+
     // Initializes the data structure using the given array of strings as the
     // dictionary.
     // (You can assume each word in the dictionary contains only the uppercase
@@ -24,6 +24,25 @@ public class BoggleSolver {
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
+        boolean allTheSame = allTheSame(board);
+
+        if (allTheSame) {
+            var num = board.rows() * board.cols();
+            var firstChar = board.getLetter(0, 0);
+            var charText = firstChar == 'Q' ? "QU" : (firstChar + "");
+
+            TST<Integer> allTheSameTST = new TST<>();
+            for (var i = 1; i < num; i++) {
+
+                var word = charText.repeat(i);
+                var score = wordsInDictionary.get(word);
+                if (score != null)
+                    allTheSameTST.put(word, score);
+            }
+
+            return allTheSameTST.keys();
+        }
+
         Queue<PathPart> possiblePaths = new Queue<>();
         Queue<PathPart> paths = new Queue<>();
 
@@ -34,7 +53,7 @@ public class BoggleSolver {
 
         while (!possiblePaths.isEmpty()) {
             PathPart currPathPart = possiblePaths.dequeue();
-            
+
             if (currPathPart.length >= 2) { // A Qu counts for 2, so the minimum number of parts is 2.
                 paths.enqueue(currPathPart);
             }
@@ -55,6 +74,18 @@ public class BoggleSolver {
         }
 
         return wordTST.keys();
+    }
+
+    private boolean allTheSame(BoggleBoard board) {
+        char firstChar = board.getLetter(0, 0);
+
+        for (var j = 0; j < board.cols(); j++)
+            for (var i = 0; i < board.rows(); i++) {
+                if (board.getLetter(i, j) != firstChar)
+                    return false;
+            }
+
+        return true;
     }
 
     // Returns the score of the given word if it is in the dictionary, zero
@@ -169,7 +200,7 @@ public class BoggleSolver {
         int length;
         PathPart prev;
         String wordSoFar;
-        
+
         public PathPart(int startNum, char c) {
             num = startNum;
             length = 1;
