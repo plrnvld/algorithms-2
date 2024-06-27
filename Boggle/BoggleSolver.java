@@ -32,7 +32,7 @@ public class BoggleSolver {
             var charText = firstChar == 'Q' ? "QU" : (firstChar + "");
 
             TST<Integer> allTheSameTST = new TST<>();
-            for (var i = 1; i < num; i++) {
+            for (var i = 1; i <= num; i++) {
 
                 var word = charText.repeat(i);
                 var score = wordsInDictionary.get(word);
