@@ -4,7 +4,6 @@ import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.TST;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.stream.IntStream;
 import java.util.LinkedList;
 import java.util.stream.StreamSupport;
@@ -28,10 +27,17 @@ public class BoggleSolver {
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
-        return () -> StreamSupport.stream(getAllBoggleSequences(board).spliterator(), false)
+        Iterable<String> validWords = () -> StreamSupport.stream(getAllBoggleSequences(board).spliterator(), false)
                 .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
 
-        // ################### This should check that valid words are returned only once
+
+        TST<Integer> dedupSearchTree = new TST<>();
+
+        for (var word: validWords) {
+            dedupSearchTree.put(word, 1);
+        }
+
+        return dedupSearchTree.keys();
     }
 
     private Iterable<String> getAllBoggleSequences(BoggleBoard board) {
