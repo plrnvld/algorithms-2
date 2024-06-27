@@ -5,12 +5,7 @@ import edu.princeton.cs.algs4.TST;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.stream.IntStream;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Stack;
-import java.util.stream.StreamSupport;
 
 public class BoggleSolver {
     private final TST<Integer> wordsInDictionary;
@@ -35,50 +30,6 @@ public class BoggleSolver {
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
-        Instant sequenceSearchStart = Instant.now();
-
-        Iterable<String> sequences = () -> StreamSupport
-                .stream(getBoggleCharacterSequences(board).spliterator(), false).iterator();
-
-        // Get all values from iterable so dedup phase does not need lazy loading, and
-        // can be measured better
-        List<String> sequenceList = new ArrayList<>();
-        sequences.forEach(sequenceList::add);
-
-        Instant sequenceSearchEnd = Instant.now();
-        printDuration("sequence search", sequenceSearchStart, sequenceSearchEnd);
-
-        Instant validWordsStart = Instant.now();
-
-        Iterable<String> validWords = () -> StreamSupport.stream(sequenceList.spliterator(), false)
-                .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
-
-        // Get all values from iterable so dedup phase does not need lazy loading, and
-        // can be measured better
-        List<String> wordList = new ArrayList<>();
-        validWords.forEach(wordList::add);
-
-        Instant validWordsEnd = Instant.now();
-
-        printDuration("validate words", validWordsStart, validWordsEnd);
-
-        Instant dedupStart = Instant.now();
-        TST<Integer> dedupSearchTree = new TST<>();
-
-        for (var word : wordList) {
-            dedupSearchTree.put(word, 1);
-        }
-
-        var keys = dedupSearchTree.keys();
-
-        Instant dedupEnd = Instant.now();
-
-        printDuration("dedup", dedupStart, dedupEnd);
-
-        return keys;
-    }
-
-    private Iterable<String> getBoggleCharacterSequences(BoggleBoard board) {
         Queue<PathPart> possiblePaths = new Queue<>();
         Queue<PathPart> paths = new Queue<>();
 
@@ -86,10 +37,8 @@ public class BoggleSolver {
 
         int boardSize = board.cols() * board.rows();
         for (var i = 0; i < boardSize; i++) {
-            possiblePaths.enqueue(new PathPart(i));
+            possiblePaths.enqueue(new PathPart(i, getLetter(i, board)));
         }
-
-        LinkedList<String> charSequences = new LinkedList<>();
 
         while (!possiblePaths.isEmpty()) {
             PathPart currPathPart = possiblePaths.dequeue();
@@ -110,16 +59,19 @@ public class BoggleSolver {
 
         Instant convertPathsToWordsStart = Instant.now();
 
+        TST<Boolean> wordTST = new TST<>(); 
+
         while (!paths.isEmpty()) {
             var nextPath = paths.dequeue();
-            charSequences.add(getWordFromPath(board, nextPath));
+            if (wordsInDictionary.contains(nextPath.wordSoFar))
+                wordTST.put(nextPath.wordSoFar, true);
         }
 
         Instant convertPathsToWordsEnd = Instant.now();
 
         printDuration("word conversions", convertPathsToWordsStart, convertPathsToWordsEnd, 1);
 
-        return charSequences;
+        return wordTST.keys();
     }
 
     // Returns the score of the given word if it is in the dictionary, zero
@@ -152,38 +104,39 @@ public class BoggleSolver {
 
         if (rowLargerThanZero) {
             if (colLargerThanZero)
-                addWhenOpen(col - 1, row - 1, nextPathParts, pathPart, boardCols);
+                addWhenOpen(col - 1, row - 1, nextPathParts, pathPart, board);
 
-            addWhenOpen(col, row - 1, nextPathParts, pathPart, boardCols);
+            addWhenOpen(col, row - 1, nextPathParts, pathPart, board);
 
             if (colSmallerThanMax)
-                addWhenOpen(col + 1, row - 1, nextPathParts, pathPart, boardCols);
+                addWhenOpen(col + 1, row - 1, nextPathParts, pathPart, board);
         }
 
         if (rowSmallerThanMax) {
             if (colLargerThanZero)
-                addWhenOpen(col - 1, row + 1, nextPathParts, pathPart, boardCols);
+                addWhenOpen(col - 1, row + 1, nextPathParts, pathPart, board);
 
-            addWhenOpen(col, row + 1, nextPathParts, pathPart, boardCols);
+            addWhenOpen(col, row + 1, nextPathParts, pathPart, board);
 
             if (colSmallerThanMax)
-                addWhenOpen(col + 1, row + 1, nextPathParts, pathPart, boardCols);
+                addWhenOpen(col + 1, row + 1, nextPathParts, pathPart, board);
         }
 
         if (colLargerThanZero)
-            addWhenOpen(col - 1, row, nextPathParts, pathPart, boardCols);
+            addWhenOpen(col - 1, row, nextPathParts, pathPart, board);
 
         if (colSmallerThanMax)
-            addWhenOpen(col + 1, row, nextPathParts, pathPart, boardCols);
+            addWhenOpen(col + 1, row, nextPathParts, pathPart, board);
 
         return nextPathParts;
     }
 
-    private void addWhenOpen(int col, int row, ArrayList<PathPart> nexPathParts, PathPart pathPart, int boardCols) {
+    private void addWhenOpen(int col, int row, ArrayList<PathPart> nexPathParts, PathPart pathPart, BoggleBoard board) {
+        int boardCols = board.cols();
         var nextNum = colRowToNum(col, row, boardCols);
 
         if (!pathPart.containsNum(nextNum))
-            nexPathParts.add(new PathPart(pathPart, nextNum));
+            nexPathParts.add(new PathPart(pathPart, nextNum, getLetter(nextNum, board)));
     }
 
     private static int numToRow(int num, int width) {
@@ -198,23 +151,12 @@ public class BoggleSolver {
         return row * width + col;
     }
 
-    private static String getWordFromPath(BoggleBoard board, PathPart pathPart) {
-        StringBuilder builder = new StringBuilder();
+    private static char getLetter(int num, BoggleBoard board) {
         int width = board.cols();
+        int row = numToRow(num, width);
+        int col = numToCol(num, width);
 
-        for (var num : pathPart.nums()) {
-            int row = numToRow(num, width);
-            int col = numToCol(num, width);
-
-            char letter = board.getLetter(row, col);
-
-            if (letter == 'Q')
-                builder.append("QU");
-            else
-                builder.append(letter);
-        }
-
-        return builder.toString();
+        return board.getLetter(row, col);
     }
 
     // Give the score for a word, but don't check if it's in the dictionary
@@ -243,16 +185,27 @@ public class BoggleSolver {
         int num;
         int length;
         PathPart prev;
+        String wordSoFar;
 
-        public PathPart(int start) {
-            num = start;
+        public PathPart(int startNum, char c) {
+            num = startNum;
             length = 1;
+
+            if (c == 'Q')
+                wordSoFar = "QU";
+            else
+                wordSoFar = "" + c;
         }
 
-        public PathPart(PathPart prev, int num) {
+        public PathPart(PathPart prev, int num, char c) {
             this.prev = prev;
             this.num = num;
             length = prev.length + 1;
+
+            if (c == 'Q')
+                wordSoFar = prev.wordSoFar +"QU";
+            else
+                wordSoFar = prev.wordSoFar + c;
         }
 
         public boolean containsNum(int n) {
@@ -261,7 +214,7 @@ public class BoggleSolver {
 
         public Iterable<Integer> nums() {
             Stack<Integer> stack = new Stack<>();
-            
+
             PathPart curr = this;
             stack.push(curr.num);
 
@@ -271,6 +224,32 @@ public class BoggleSolver {
             }
 
             return stack;
+        }
+    }
+
+    private class NumStringTST {
+        private TST<String> tst;
+
+        public NumStringTST() {
+            tst = new TST<>();
+        }
+
+        public String get(int[] key) {
+            return tst.get(numsToKey(key));
+        }
+
+        public void put(int[] key, String val) {
+            tst.put(numsToKey(key), val);
+        }
+
+        private String numsToKey(int[] nums) {
+            StringBuilder builder = new StringBuilder();
+            for (var num : nums) {
+                char keyPart = (char) ((int) 'A' + num);
+                builder.append(keyPart);
+            }
+
+            return builder.toString();
         }
     }
 
