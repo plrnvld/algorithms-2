@@ -8,6 +8,8 @@ import java.util.Date;
 
 public class BoggleSolver {
     private final TST<Integer> wordsInDictionary;
+    private TST<Integer> lastWordTST;
+    private String lastBoardIdentifier;
 
     // Initializes the data structure using the given array of strings as the
     // dictionary.
@@ -24,6 +26,11 @@ public class BoggleSolver {
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
+        var boardIdentifier = getBoardIdentifier(board);
+        if (boardIdentifier == lastBoardIdentifier) {
+            return lastWordTST.keys();
+        }
+
         boolean allTheSame = allTheSame(board);
 
         if (allTheSame) {
@@ -40,6 +47,8 @@ public class BoggleSolver {
                     allTheSameTST.put(word, score);
             }
 
+            lastBoardIdentifier = boardIdentifier;
+            lastWordTST = allTheSameTST;
             return allTheSameTST.keys();
         }
 
@@ -73,6 +82,8 @@ public class BoggleSolver {
                 wordTST.put(word, score);
         }
 
+        lastBoardIdentifier = boardIdentifier;
+        lastWordTST = wordTST;
         return wordTST.keys();
     }
 
@@ -86,6 +97,18 @@ public class BoggleSolver {
             }
 
         return true;
+    }
+
+    private static String getBoardIdentifier(BoggleBoard board) {
+        StringBuilder builder = new StringBuilder();
+        for (var j = 0; j < board.cols(); j++)
+            for (var i = 0; i < board.rows(); i++) {
+                char c = board.getLetter(i, j);
+                var charText = c == 'Q' ? "QU" : (c + "");
+                builder.append(charText);
+            }
+
+        return builder.toString();
     }
 
     // Returns the score of the given word if it is in the dictionary, zero
