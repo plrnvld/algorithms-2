@@ -18,46 +18,44 @@ public class BoggleSolver {
     public BoggleSolver(String[] dictionary) {
         wordsInDictionary = new TST<>();
 
-        System.out.println("Preparing dictionary");
         for (String word : dictionary) {
             wordsInDictionary.put(word, wordValue(word));
         }
-        System.out.println("Dictionary created, contains " + wordsInDictionary.size() + " words.");
     }
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
-        Iterable<String> validWords = () -> StreamSupport.stream(getAllBoggleSequences(board).spliterator(), false)
+        Iterable<String> validWords = () -> StreamSupport
+                .stream(getBoggleCharacterSequences(board).spliterator(), false)
                 .filter(boggleSeq -> wordsInDictionary.contains(boggleSeq)).iterator();
-
 
         TST<Integer> dedupSearchTree = new TST<>();
 
-        for (var word: validWords) {
+        for (var word : validWords) {
             dedupSearchTree.put(word, 1);
         }
 
         return dedupSearchTree.keys();
     }
 
-    private Iterable<String> getAllBoggleSequences(BoggleBoard board) {
-        System.out.println("Start generating sequences");
-
-        Queue<int[]> paths = new Queue<>();
+    private Iterable<String> getBoggleCharacterSequences(BoggleBoard board) {
+        Queue<int[]> possiblePaths = new Queue<>();
 
         int boardSize = board.cols() * board.rows();
         for (var i = 0; i < boardSize; i++) {
             int[] newPath = { i };
-            paths.enqueue(newPath);
+            possiblePaths.enqueue(newPath);
         }
 
-        System.out.println("Working on paths");
+        LinkedList<String> charSequences = new LinkedList<>();
 
-        int pathsAdded = 0;
-
-        while (!paths.isEmpty() && pathsAdded < 1000) {
-            int[] currPath = paths.dequeue();
+        while (!possiblePaths.isEmpty()) {
+            int[] currPath = possiblePaths.dequeue();
             int lastNum = currPath[currPath.length - 1];
+
+            if (currPath.length >= 3) {
+                charSequences.add(getWordFromPath(board, currPath));
+            }
 
             for (Integer nextNum : getNextNums(lastNum, currPath, board)) {
                 int[] newPath = new int[currPath.length + 1];
@@ -67,29 +65,11 @@ public class BoggleSolver {
 
                 newPath[i] = nextNum.intValue();
 
-                // String pathText = Arrays.toString(newPath);
-                // System.out.println(" Enq: [" + pathText + "]");
-
-                paths.enqueue(newPath);
-                pathsAdded++;
+                possiblePaths.enqueue(newPath);
             }
         }
 
-        LinkedList<String> sequences = new LinkedList<>();
-
-        while (!paths.isEmpty()) {
-            int[] currPath = paths.dequeue();
-            // String pathText = Arrays.toString(currPath);
-            // System.out.println(" Deq: [" + pathText + "]");
-
-            if (currPath.length >= 3) {
-                sequences.add(getWordFromPath(board, currPath));
-            }
-        }
-
-        System.out.println("Generating sequences finished, " + sequences.size() + " sequences added.");
-
-        return sequences;
+        return charSequences;
     }
 
     // Returns the score of the given word if it is in the dictionary, zero
@@ -105,9 +85,11 @@ public class BoggleSolver {
     }
 
     private Iterable<Integer> getNextNums(int num, int[] path, BoggleBoard board) {
-        ArrayList<Integer> sequences = new ArrayList<>(8);
-        if (path.length >= 16)
+        ArrayList<Integer> nextNums = new ArrayList<>(8);
+        if (path.length > 16) {
+            System.out.println(">>> It happened, path bigger than 16");
             return new ArrayList<>();
+        }
 
         int boardRows = board.rows();
         int boardCols = board.cols();
@@ -119,40 +101,40 @@ public class BoggleSolver {
         boolean rowSmallerThanMax = row < boardRows - 1;
         boolean colSmallerThanMax = col < boardCols - 1;
 
-        if (rowLargerThanZero) {          
+        if (rowLargerThanZero) {
             if (colLargerThanZero)
-                addWhenOpen(col - 1, row - 1, sequences, path, boardCols);
+                addWhenOpen(col - 1, row - 1, nextNums, path, boardCols);
 
-            addWhenOpen(col, row - 1, sequences, path, boardCols);
+            addWhenOpen(col, row - 1, nextNums, path, boardCols);
 
             if (colSmallerThanMax)
-                addWhenOpen(col + 1, row - 1, sequences, path, boardCols);
+                addWhenOpen(col + 1, row - 1, nextNums, path, boardCols);
         }
 
         if (rowSmallerThanMax) {
             if (colLargerThanZero)
-                addWhenOpen(col - 1, row + 1, sequences, path, boardCols);
+                addWhenOpen(col - 1, row + 1, nextNums, path, boardCols);
 
-            addWhenOpen(col, row + 1, sequences, path, boardCols);
-            
+            addWhenOpen(col, row + 1, nextNums, path, boardCols);
+
             if (colSmallerThanMax)
-                addWhenOpen(col + 1, row + 1, sequences, path, boardCols);
+                addWhenOpen(col + 1, row + 1, nextNums, path, boardCols);
         }
 
         if (colLargerThanZero)
-            addWhenOpen(col - 1, row, sequences, path, boardCols);
+            addWhenOpen(col - 1, row, nextNums, path, boardCols);
 
         if (colSmallerThanMax)
-            addWhenOpen(col + 1, row, sequences, path, boardCols);
+            addWhenOpen(col + 1, row, nextNums, path, boardCols);
 
-        return sequences;
+        return nextNums;
     }
 
-    private static void addWhenOpen(int col, int row, ArrayList<Integer> sequences, int[] path, int boardCols) {
+    private static void addWhenOpen(int col, int row, ArrayList<Integer> nextNums, int[] path, int boardCols) {
         var nextNum = colRowToNum(col, row, boardCols);
 
         if (!IntStream.of(path).anyMatch(x -> x == nextNum))
-            sequences.add(nextNum);
+            nextNums.add(nextNum);
     }
 
     private static int numToRow(int num, int width) {
@@ -176,10 +158,11 @@ public class BoggleSolver {
             int col = numToCol(num, width);
 
             // System.out.println(" > path " + Arrays.toString(path));
-            // System.out.println("   > Getting col=" + col + ", row=" + row + " for num=" + num);
+            // System.out.println(" > Getting col=" + col + ", row=" + row + " for num=" +
+            // num);
             // if (col == 4 || row == 4) {
-            //     System.out.println("ABORT: row=" + row + " col=" + col);
-            //     System.out.println("Path: " + Arrays.toString(path));
+            // System.out.println("ABORT: row=" + row + " col=" + col);
+            // System.out.println("Path: " + Arrays.toString(path));
             // }
 
             char letter = board.getLetter(row, col);
@@ -215,6 +198,8 @@ public class BoggleSolver {
         }
     }
 
+    // Example: java BoggleSolver ./testfiles/dictionary-algs4.txt
+    // ./testfiles/board4x4.txt
     public static void main(String[] args) {
         In in = new In(args[0]);
         String[] dictionary = in.readAllStrings();
