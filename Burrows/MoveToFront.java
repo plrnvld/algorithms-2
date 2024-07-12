@@ -30,7 +30,25 @@ public class MoveToFront {
     // apply move-to-front decoding, reading from standard input and writing to
     // standard output
     public static void decode() {
+        CharLinkedList linked = new CharLinkedList();
+        for (var i = 0; i < 256; i++)
+            linked.addLast((char) i);
 
+        while (!BinaryStdIn.isEmpty()) {
+            var pos = BinaryStdIn.readChar(8);
+
+            var curr = linked.first;
+            while (pos > 0) {
+                curr = curr.next;
+                pos--;
+            }
+
+            BinaryStdOut.write(curr.value);
+
+            linked.moveToStart(curr);
+        }
+
+        BinaryStdOut.flush();
     }
 
     // if args[0] is "-", apply move-to-front encoding
@@ -47,6 +65,8 @@ public class MoveToFront {
 
     // java MoveToFront - < ./testfiles/abra.txt | java
     // edu.princeton.cs.algs4.HexDump 16
+
+    // java MoveToFront - < ./testfiles/abra.txt | java MoveToFront +
 }
 
 class CharLinkedList {
