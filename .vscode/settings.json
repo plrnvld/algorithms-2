@@ -2,9 +2,11 @@
     "java.project.sourcePaths": [
         "SeamCarving",
         "WordNet",
-        "Baseball"
+        "Baseball",
+        "Burrows",
+        "Boggle"
     ],
     "java.project.referencedLibraries": [
-        "algs4.jar"
+        "c:\\source\\algorithms2\\week1\\algs4.jar"
     ]
 }
