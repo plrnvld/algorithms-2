@@ -5,20 +5,23 @@ public class MoveToFront {
     // apply move-to-front encoding, reading from standard input and writing to
     // standard output
     public static void encode() {
-        int[] chars = new int[256];
-        for (var i = 0; i < chars.length; i++)
-            chars[i] = i;
+        CharLinkedList linked = new CharLinkedList();
+        for (var i = 0; i < 256; i++)
+            linked.addLast((char) i);
 
         while (!BinaryStdIn.isEmpty()) {
             var charVal = BinaryStdIn.readChar(8);
 
-            var pos = 0;
-            while (chars[pos] != charVal)
+            int pos = 0;
+            var curr = linked.first;
+            while (curr.value != charVal) {
+                curr = curr.next;
                 pos++;
-
-            // ################# Move to the front needed 
+            }
 
             BinaryStdOut.write(pos, 8);
+
+            linked.moveToStart(curr);
         }
 
         BinaryStdOut.flush();
@@ -42,5 +45,60 @@ public class MoveToFront {
             decode();
     }
 
-    // java MoveToFront - < ./testfiles/abra.txt | java edu.princeton.cs.algs4.HexDump 16
+    // java MoveToFront - < ./testfiles/abra.txt | java
+    // edu.princeton.cs.algs4.HexDump 16
+}
+
+class CharLinkedList {
+    public CharNode first;
+    public CharNode last;
+
+    public void addFirst(char c) {
+        var node = new CharNode(c);
+        node.next = first;
+        if (first != null)
+            first.prev = node;
+
+        first = node;
+        if (last == null)
+            last = node;
+    }
+
+    public void moveToStart(CharNode node) {
+        if (node == first)
+            return;
+
+        remove(node);
+        addFirst(node.value);
+    }
+
+    public void remove(CharNode node) {
+        if (node.prev != null)
+            node.prev.next = node.next;
+
+        if (node.next != null)
+            node.next.prev = node.prev;
+    }
+
+    public void addLast(char c) {
+        var node = new CharNode(c);
+        node.prev = last;
+        if (last != null)
+            last.next = node;
+
+        last = node;
+        if (first == null)
+            first = node;
+    }
+}
+
+class CharNode {
+    public char value;
+
+    public CharNode(char value) {
+        this.value = value;
+    }
+
+    public CharNode prev;
+    public CharNode next;
 }
