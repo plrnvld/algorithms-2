@@ -14,6 +14,7 @@ public class CircularSuffixArray {
 
         TrieST<Integer> trie = new TrieST<>();
 
+        // ################ Performance is not good. Needs to be improved later.
         int startPos = 0;
         for (var i = 0; i < length(); i++) {
             StringBuilder builder = new StringBuilder();
