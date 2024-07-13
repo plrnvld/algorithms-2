@@ -15,6 +15,12 @@ public class BurrowsWheeler {
     // if args[0] is "-", apply Burrows-Wheeler transform
     // if args[0] is "+", apply Burrows-Wheeler inverse transform
     public static void main(String[] args) {
+        if (args.length != 1 || !(args[0].equals("+") || args[0].equals("-")))
+            throw new IllegalArgumentException("One argument required: - for transforming or + for inverse transforming");
 
+        if (args[0].equals("-"))
+            transform();
+        else
+            inverseTransform();
     }
 }
