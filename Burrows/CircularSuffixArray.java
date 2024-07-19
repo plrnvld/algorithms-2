@@ -2,8 +2,8 @@ import edu.princeton.cs.algs4.TrieSET;
 import edu.princeton.cs.algs4.TrieST;
 
 public class CircularSuffixArray {
-    private String s;
-    private int[] indices;
+    private final String s;
+    private final int[] indices;
 
     // circular suffix array of s
     public CircularSuffixArray(String s) {

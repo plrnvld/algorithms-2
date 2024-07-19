@@ -38,7 +38,7 @@ public class BurrowsWheeler {
     // apply Burrows-Wheeler inverse transform,
     // reading from standard input and writing to standard output
     public static void inverseTransform() {
-
+        BinaryStdOut.close();
     }
 
     // java BurrowsWheeler - < ./testfiles/abra.txt | java
