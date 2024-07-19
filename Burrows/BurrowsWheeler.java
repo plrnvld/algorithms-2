@@ -1,5 +1,9 @@
 import edu.princeton.cs.algs4.BinaryStdIn;
 import edu.princeton.cs.algs4.BinaryStdOut;
+import edu.princeton.cs.algs4.Queue;
+import edu.princeton.cs.algs4.ST;
+
+import java.util.Arrays;
 
 public class BurrowsWheeler {
 
@@ -38,11 +42,68 @@ public class BurrowsWheeler {
     // apply Burrows-Wheeler inverse transform,
     // reading from standard input and writing to standard output
     public static void inverseTransform() {
+        // Read input
+        var first = BinaryStdIn.readInt();
+        var queue = new Queue<Character>();
+
+        while (!BinaryStdIn.isEmpty()) {
+            var nextChar = BinaryStdIn.readChar(8);
+            queue.enqueue(Character.valueOf(nextChar));
+        }
+
+        // Initialize data
+        var size = queue.size();
+        char[] t = new char[size];
+        int[] next = new int[size];
+
+        int pos = 0;
+        for (var c : queue) {
+            t[pos++] = c;
+        }
+
+        char[] copiedT = Arrays.copyOf(t, size);
+        Arrays.sort(copiedT);
+        char[] sortedT = copiedT;
+
+        // Calculate next[]
+        var charCount = new ST<Character, Integer>();
+        for (var i = 0; i < sortedT.length; i++) {
+            var c = sortedT[i];
+            var key = Character.valueOf(c);
+            var entry = charCount.get(key);
+
+            int skip = entry == null ? 0 : entry;
+            int skipCount = 0;
+
+            int scan = 0;
+            while (t[scan] != c || skipCount < skip) {
+                if (t[scan] == c) {
+                    skipCount++;
+                    scan++;
+                } else {
+                    scan++;
+                }
+            }
+
+            next[i] = scan;
+
+            charCount.put(key, skip + 1);
+        }
+
+        // Given next[] calculate original input
+        var curr = first;
+        for (var i = 0; i < size; i++) {
+            BinaryStdOut.write(sortedT[curr]);
+            curr = next[curr];
+        }
+
         BinaryStdOut.close();
     }
 
     // java BurrowsWheeler - < ./testfiles/abra.txt | java
     // edu.princeton.cs.algs4.HexDump 16
+
+    // java BurrowsWheeler - < ./testfiles/abra.txt | java BurrowsWheeler +
 
     // if args[0] is "-", apply Burrows-Wheeler transform
     // if args[0] is "+", apply Burrows-Wheeler inverse transform

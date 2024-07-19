@@ -2,11 +2,13 @@ import edu.princeton.cs.algs4.BinaryStdIn;
 import edu.princeton.cs.algs4.BinaryStdOut;
 
 public class MoveToFront {
+    private static final int ASCII_R = 256;
+
     // apply move-to-front encoding, reading from standard input and writing to
     // standard output
     public static void encode() {
         CharLinkedList linked = new CharLinkedList();
-        for (var i = 0; i < 256; i++)
+        for (var i = 0; i < ASCII_R; i++)
             linked.addLast((char) i);
 
         while (!BinaryStdIn.isEmpty()) {
@@ -31,7 +33,7 @@ public class MoveToFront {
     // standard output
     public static void decode() {
         CharLinkedList linked = new MoveToFront.CharLinkedList();
-        for (var i = 0; i < 256; i++)
+        for (var i = 0; i < ASCII_R; i++)
             linked.addLast((char) i);
 
         while (!BinaryStdIn.isEmpty()) {
