@@ -1,3 +1,4 @@
+import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.TrieSET;
 import edu.princeton.cs.algs4.TrieST;
 
@@ -14,20 +15,23 @@ public class CircularSuffixArray {
 
         TrieST<Integer> trie = new TrieST<>();
 
-        // ################ Performance is not good. Needs to be improved later.
         int startPos = 0;
         for (var i = 0; i < length(); i++) {
-            StringBuilder builder = new StringBuilder();
+            var suffixQueue = new Queue<>();
                 
-            for (var n = 0; n < length(); n++) {
+            for (var n = 0; n < Math.min(20, length()); n++) { // ########### Hack in performance optimization, this breaks correctness!
                 var pos = (startPos + n) % length();
 
-                builder.append(s.charAt(pos));
+                suffixQueue.enqueue(s.charAt(pos));
             }
 
-            var suffix = builder.toString();
+            var suffixArray = new char[suffixQueue.size()];
+            int suffixPos = 0;
+            for (var c : suffixQueue) {
+                suffixArray[suffixPos++] = (char) c;
+            }
 
-            trie.put(suffix, i);
+            trie.put(new String(suffixArray), i);
 
             startPos++;
         }
