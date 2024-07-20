@@ -3,22 +3,24 @@ import edu.princeton.cs.algs4.BinaryStdOut;
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.ST;
 
-import java.util.Arrays;
-
 public class BurrowsWheeler {
 
     // apply Burrows-Wheeler transform,
     // reading from standard input and writing to standard output
     public static void transform() {
-        var builder = new StringBuilder();
+        var queue = new Queue<Character>();
         while (!BinaryStdIn.isEmpty()) {
             var charVal = BinaryStdIn.readChar(8);
-            builder.append(charVal);
-
+            queue.enqueue(Character.valueOf(charVal));
         }
 
-        var text = builder.toString();
-        var circularSuffixArray = new CircularSuffixArray(text);
+        var charArray = new char[queue.size()];
+        int pos = 0;
+        for (var c : queue) {
+            charArray[pos++] = c;
+        }
+
+        var circularSuffixArray = new CircularSuffixArray(new String(charArray));
 
         var originalIndex = -1;
         for (var i = 0; i < circularSuffixArray.length() && originalIndex == -1; i++) {
@@ -30,9 +32,9 @@ public class BurrowsWheeler {
 
         for (var i = 0; i < circularSuffixArray.length(); i++) {
             var index = circularSuffixArray.index(i);
-            var pos = Math.floorMod(index - 1, circularSuffixArray.length());
+            var posInSuffixArray = Math.floorMod(index - 1, circularSuffixArray.length());
 
-            BinaryStdOut.write(text.charAt(pos));
+            BinaryStdOut.write(charArray[posInSuffixArray]);
         }
 
         BinaryStdOut.flush();
@@ -60,13 +62,9 @@ public class BurrowsWheeler {
         for (var c : queue) {
             t[pos++] = c;
         }
-
-        char[] copiedT = Arrays.copyOf(t, size);
-        Arrays.sort(copiedT);
-        char[] sortedT = copiedT;
-
+        
         // Calculate next[]
-        calculateNextOptimized(next, t);
+        var sortedT = calculateNextOptimized(next, t);
 
         // Given next[] calculate original input
         var curr = first;
@@ -78,7 +76,7 @@ public class BurrowsWheeler {
         BinaryStdOut.close();
     }
 
-    private static void calculateNextOptimized(int[] next, char[] t) {
+    private static char[] calculateNextOptimized(int[] next, char[] t) {
         int r = 256;
 
         int[] charCount = new int[r];
@@ -129,12 +127,14 @@ public class BurrowsWheeler {
             Character cFromT = Character.valueOf(t[i]);
             var indexToStore = i;
 
-            var offsetToStore = (int)sortedStart.get(cFromT);
-            var seen = (int)tSeen.get(cFromT);
+            var offsetToStore = (int) sortedStart.get(cFromT);
+            var seen = (int) tSeen.get(cFromT);
             next[offsetToStore + seen] = indexToStore;
 
             tSeen.put(cFromT, seen + 1);
         }
+
+        return sortedT;
     }
 
     // java BurrowsWheeler - < ./testfiles/abra.txt | java
