@@ -66,7 +66,7 @@ public class BurrowsWheeler {
         char[] sortedT = copiedT;
 
         // Calculate next[]
-        calculateNext(next, t, sortedT);
+        calculateNextOptimized(next, t);
 
         // Given next[] calculate original input
         var curr = first;
@@ -78,53 +78,63 @@ public class BurrowsWheeler {
         BinaryStdOut.close();
     }
 
-    private static void calculateNext(int[] next, char[] t, char[] sortedT) {
-        var charCount = new ST<Character, Integer>();
-        for (var i = 0; i < sortedT.length; i++) {
-            var c = sortedT[i];
-            var key = Character.valueOf(c);
-            var entry = charCount.get(key);
-
-            int skip = entry == null ? 0 : entry;
-            int skipCount = 0;
-
-            int scan = 0;
-            while (t[scan] != c || skipCount < skip) {
-                if (t[scan] == c) {
-                    skipCount++;
-                }
-                
-                scan++;
-            }
-
-            next[i] = scan;
-
-            charCount.put(key, skip + 1);
-        }
-    }
-
-    private static void calculateNextNext(int[] next, char[] t, char[] sortedT) {
+    private static void calculateNextOptimized(int[] next, char[] t) {
         int r = 256;
 
         int[] charCount = new int[r];
-        int[] charCumulative = new int[r];
-        int[] charsSeen = new int[r];
+        char[] sortedT = new char[t.length];
+        ST<Character, Integer> sortedStart = new ST<>();
+        ST<Character, Integer> tSeen = new ST<>();
 
         for (var i = 0; i < r; i++) {
             charCount[i] = 0;
-            charCumulative[i] = 0;
-            charsSeen[i] = 0;
         }
 
         for (var i = 0; i < t.length; i++) {
-            var charIndex = (int)t[i];
+            var charIndex = (int) t[i];
             charCount[charIndex] = charCount[charIndex] + 1;
         }
 
-        for (var i = 1; i < charCumulative.length; i++) {
-            charCumulative[i] = charCumulative[i - 1] + charCount[i];
+        int sortedTPos = 0;
+        for (var i = 0; i < charCount.length; i++) {
+            var count = charCount[i];
+
+            if (count > 0) {
+                for (var j = 0; j < count; j++) {
+                    sortedT[sortedTPos++] = (char) i;
+                }
+            }
         }
-        
+
+        char curr = sortedT[0];
+        // System.out.println("> Offset for '" + curr + "'= 0");
+        sortedStart.put(Character.valueOf(curr), 0);
+
+        for (var i = 1; i < sortedT.length; i++) {
+            curr = sortedT[i];
+            if (curr != sortedT[i - 1]) {
+                // System.out.println("> Offset for '" + curr + "'= " + i);
+                sortedStart.put(Character.valueOf(curr), i);
+            }
+        }
+
+        // Init characters that are encountered to 0
+        for (var i = 0; i < t.length; i++) {
+            var key = Character.valueOf(sortedT[i]);
+            // System.out.println("Init sortedSeen: putting: " + key);
+            tSeen.put(Character.valueOf(key), 0);
+        }
+
+        for (var i = 0; i < t.length; i++) {
+            Character cFromT = Character.valueOf(t[i]);
+            var indexToStore = i;
+
+            var offsetToStore = (int)sortedStart.get(cFromT);
+            var seen = (int)tSeen.get(cFromT);
+            next[offsetToStore + seen] = indexToStore;
+
+            tSeen.put(cFromT, seen + 1);
+        }
     }
 
     // java BurrowsWheeler - < ./testfiles/abra.txt | java
