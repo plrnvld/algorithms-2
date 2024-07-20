@@ -66,6 +66,19 @@ public class BurrowsWheeler {
         char[] sortedT = copiedT;
 
         // Calculate next[]
+        calculateNext(next, t, sortedT);
+
+        // Given next[] calculate original input
+        var curr = first;
+        for (var i = 0; i < size; i++) {
+            BinaryStdOut.write(sortedT[curr]);
+            curr = next[curr];
+        }
+
+        BinaryStdOut.close();
+    }
+
+    private static void calculateNext(int[] next, char[] t, char[] sortedT) {
         var charCount = new ST<Character, Integer>();
         for (var i = 0; i < sortedT.length; i++) {
             var c = sortedT[i];
@@ -79,25 +92,39 @@ public class BurrowsWheeler {
             while (t[scan] != c || skipCount < skip) {
                 if (t[scan] == c) {
                     skipCount++;
-                    scan++;
-                } else {
-                    scan++;
                 }
+                
+                scan++;
             }
 
             next[i] = scan;
 
             charCount.put(key, skip + 1);
         }
+    }
 
-        // Given next[] calculate original input
-        var curr = first;
-        for (var i = 0; i < size; i++) {
-            BinaryStdOut.write(sortedT[curr]);
-            curr = next[curr];
+    private static void calculateNextNext(int[] next, char[] t, char[] sortedT) {
+        int r = 256;
+
+        int[] charCount = new int[r];
+        int[] charCumulative = new int[r];
+        int[] charsSeen = new int[r];
+
+        for (var i = 0; i < r; i++) {
+            charCount[i] = 0;
+            charCumulative[i] = 0;
+            charsSeen[i] = 0;
         }
 
-        BinaryStdOut.close();
+        for (var i = 0; i < t.length; i++) {
+            var charIndex = (int)t[i];
+            charCount[charIndex] = charCount[charIndex] + 1;
+        }
+
+        for (var i = 1; i < charCumulative.length; i++) {
+            charCumulative[i] = charCumulative[i - 1] + charCount[i];
+        }
+        
     }
 
     // java BurrowsWheeler - < ./testfiles/abra.txt | java
